@@ -1,5 +1,15 @@
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import SpotDetail from "./pages/spotDetail";
+
+
 const App = () => {
-  return <div className="bg-red-100">hello, react!</div>;
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/spotDetail" element={<SpotDetail />} />
+      </Routes>
+    </BrowserRouter>
+  );
 };
 
 export default App;
