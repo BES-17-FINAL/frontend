@@ -34,7 +34,7 @@ const useAuthStore = create((set) => ({
       const data = await authService.register(userData);
       set({
         user: data.user,
-        isAuthenticated: true,
+        isAuthenticated: false,// 회원가입 후 바로 인증 상태로 변경하지 않음
         loading: false,
       });
       return data;

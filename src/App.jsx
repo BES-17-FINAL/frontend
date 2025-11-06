@@ -5,6 +5,7 @@ import Signup from "./pages/signup";
 import Login from "./pages/login";
 import useAuthStore from "./store/authStore";
 import SpotDetail from "./pages/spotDetail";
+import { Navigate } from "react-router-dom";
 
 const App = () => {
 
