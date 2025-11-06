@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import spotService from "../service/spot";
+import spotService from "../services/spot";
 
 const useSpotStore = create((set) => ({
   spot: null,
@@ -11,8 +11,10 @@ const useSpotStore = create((set) => ({
     try {
       const response = await spotService.getSpot(spotId);
       set({ spot: response.data, loading: false });
+      return response.data;
     } catch (error) {
       set({ error: error.message, loading: false });
+      return null;
     }
   },
 }));
