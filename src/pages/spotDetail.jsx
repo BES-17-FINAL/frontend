@@ -2,13 +2,19 @@ import React, { useEffect, useState } from "react";
 import useSpotStore from "../store/spotStore";
 import { Star, MapPin, Clock, Phone, Globe } from 'lucide-react';
 
-const SpotDetail = () => {
+const SpotDetail = ({ spotId = 1 }) => { // 임시값 추가
     const { getSpot, loading, error } = useSpotStore();
     const [spot, setSpot] = useState([]);
 
     useEffect(() => {
-        setSpot(getSpot(1));
-    }, []);
+      const fetchSpot = async () => {
+        const data = await getSpot(spotId);
+        console.log(data);
+        setSpot(data);
+      };
+      fetchSpot();
+    }, [getSpot]);
+
 
   return (
     <div className="bg-white min-h-screen">
@@ -29,7 +35,7 @@ const SpotDetail = () => {
       <div className="max-w-[1200px] mx-auto px-8 py-12">
         <div className="mb-12">
           <div className="mb-6">
-            <h2 className="text-[36px] text-black mb-3">경복궁</h2>
+            <h2 className="text-[36px] text-black mb-3">{spot.title}</h2>
             <div className="flex items-center gap-2">
                 {[...Array(5)].map((_, i) => (
                 <Star key={i} className="w-6 h-6 fill-yellow-400 text-yellow-400" />
@@ -42,8 +48,8 @@ const SpotDetail = () => {
          <div className="grid grid-cols-3 gap-6 mb-8">
             <div className="col-span-2 h-[400px] rounded-lg overflow-hidden shadow-md">
                 <img
-                    src="https://images.unsplash.com/photo-1621020744929-ff077d5275ea?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0b3VyaXN0JTIwYXR0cmFjdGlvbnxlbnwxfHx8fDE3NjIyOTA2MDl8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
-                    alt="경복궁"
+                    src={spot.firstImage}
+                    alt="Spot Image"
                     className="w-full h-full object-cover"
                 />
             </div>
@@ -53,39 +59,52 @@ const SpotDetail = () => {
                     <div className="flex items-start gap-3">
                         <MapPin className="w-5 h-5 text-[#4442dd] mt-1 flex-shrink-0" />
                         <div>
-                            <p className="text-[14px] text-[#666] mb-1">위치</p>
-                            <p className="text-[16px] text-black">서울특별시 종로구 사직로 161</p>
+                            <p className="text-[14px] text-[#666] mb-1">{!spot.address ? "위치 정보 없음" : "위치"}</p>
+                            <p className="text-[16px] text-black">{spot.address}</p>
                         </div>
                     </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <Clock className="w-5 h-5 text-[#4442dd] mt-1 flex-shrink-0" />
                   <div>
-                    <p className="text-[14px] text-[#666] mb-1">운영시간</p>
-                    <p className="text-[16px] text-black">09:00 - 18:00</p>
+                    <p className="text-[14px] text-[#666] mb-1">{!spot.tel ? "운영시간 정보 없음" : "운영시간"}</p>
+                    <p className="text-[16px] text-black">{spot.tel}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <Phone className="w-5 h-5 text-[#4442dd] mt-1 flex-shrink-0" />
                   <div>
-                    <p className="text-[14px] text-[#666] mb-1">전화번호</p>
-                    <p className="text-[16px] text-black">02-3700-3900</p>
+                    <p className="text-[14px] text-[#666] mb-1">{!spot.tel ? "전화번호 정보 없음" : "전화 번호"}</p>
+                    <p className="text-[16px] text-black">{spot.tel}</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3">
-                  <Globe className="w-5 h-5 text-[#4442dd] mt-1 flex-shrink-0" />
-                  <div>
-                    <p className="text-[14px] text-[#666] mb-1">웹사이트</p>
-                    <p className="text-[16px] text-[#4442dd]">www.royalpalace.go.kr</p>
+                  <div className="flex items-start gap-3 min-w-0">
+                    <Globe className="w-5 h-5 text-[#4442dd] mt-1 flex-shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-[14px] text-[#666] mb-1">
+                        {!spot.homepage ? "웹사이트 정보 없음" : "웹사이트"}
+                      </p>
+
+                      {spot.homepage ? (
+                        <a
+                          href={spot.homepage}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[16px] text-[#4442dd] break-all underline hover:text-blue-700 block"
+                        >
+                          {spot.homepage}
+                        </a>
+                      ) : (
+                        <p className="text-[16px] text-gray-500">홈페이지 정보 없음</p>
+                      )}
+                    </div>
                   </div>
                 </div>
             </div>
-         </div>
             <div className="border-l-4 border-[#4442dd] pl-6 py-2">
                 <h3 className="text-[20px] text-black mb-3">개요</h3>
                 <p className="text-[16px] text-[#333] leading-relaxed">
-                조선왕조의 법궁으로 1395년에 창건되었습니다. 근정전을 비롯한 7,700여 칸의 건물들이 미로같이 빼곡히 들어차 있었으나 
-                현재는 일부만 복원되어 있습니다. 경복궁은 북악산을 배경으로 자리잡은 조선시대의 대표적인 건축물입니다.
+                  {spot.description}
                 </p>
           </div>
         <div>
