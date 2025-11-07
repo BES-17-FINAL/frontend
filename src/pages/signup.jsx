@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import useAuthStore from '../store/authStore';
+import { useNavigate } from "react-router-dom";
 
 function Signup() {
+  const navigate = useNavigate();
+
   const [form, setForm] = useState({
-    username: "",
-    user_name: '',
+    nickname: "",
+    userName: '',
     email: '',
     password: ''
   });
@@ -19,11 +22,12 @@ function Signup() {
   const handleSubmit = (e) => {
     e.preventDefault();
     
-
+    console.log("회원가입 폼 데이터:", form);
     useAuthStore.getState().register(form)
       .then((data) => {
         console.log("회원가입 성공:", data);
         // 회원가입 성공 후 처리 (예: 로그인 페이지로 이동)
+        navigate("/login");
       })
       .catch((err) => {
         console.error("회원가입 실패:", err);
@@ -47,8 +51,8 @@ function Signup() {
       <form onSubmit={handleSubmit} className="space-y-4">
           <input
           type="text"
-          name="username"
-          placeholder="username"
+          name="nickname"
+          placeholder="nickname"
           value={form.name}
           onChange={handleChange}
           required
@@ -56,8 +60,8 @@ function Signup() {
         />
         <input
           type="text"
-          name="user_name"
-          placeholder="user_name"
+          name="username"
+          placeholder="userName"
           value={form.name}
           onChange={handleChange}
           required
