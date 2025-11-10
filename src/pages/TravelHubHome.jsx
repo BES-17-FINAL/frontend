@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import SearchBar from "../components/ui/SearchBar";
 import { MapPin, Search, User } from 'lucide-react';
 
 import useAuthStore from '../store/authStore';

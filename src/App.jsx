@@ -4,6 +4,7 @@ import TravelHubHome from "./pages/TravelHubHome";
 import Signup from "./pages/signup";
 import Login from "./pages/login";
 import useAuthStore from "./store/authStore";
+import SearchResults from "./pages/SearchResults"
 
 import SpotDetail from "./pages/spotDetail";
 import { Navigate } from "react-router-dom";
@@ -35,7 +36,7 @@ const App = () => {
         />
         <Route
           path="/searchresults"
-          element={isAuthenticated ? <Navigate to="/" /> : <SearchResults />}
+          element={<SearchResults />}
         />
 
       </Routes>
