@@ -4,6 +4,7 @@ import TravelHubHome from "./pages/TravelHubHome";
 import Signup from "./pages/signup";
 import Login from "./pages/login";
 import useAuthStore from "./store/authStore";
+import SearchResults from "./pages/SearchResults";
 
 const App = () => {
 
@@ -29,6 +30,10 @@ const App = () => {
         <Route
           path="/signup"
           element={isAuthenticated ? <Navigate to="/" /> : <Signup />}
+        />
+        <Route
+          path="/searchresults"
+          element={isAuthenticated ? <Navigate to="/" /> : <SearchResults />}
         />
 
       </Routes>
