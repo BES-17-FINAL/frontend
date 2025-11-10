@@ -1,13 +1,17 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Search, User } from 'lucide-react';
-import SearchBar from "../components/ui/SearchBar";
 
+import useAuthStore from '../store/authStore';
 // Travel Hub - Home screen
 // Usage: add this component to your React Router (e.g. path="/")
 // TailwindCSS is used for styling. Framer Motion is available if you want to add animations.
 
 export default function TravelHubHome() {
+  const { isAuthenticated, logout } = useAuthStore();
+  const handleLogout = () => {
+    logout(); // Zustand logout 실행 → 토큰/유저 정보 제거
+  };
   return (
     <div className="min-h-screen bg-gradient-to-b from-sky-50 to-white text-gray-900">
       {/* Header */}
@@ -20,7 +24,7 @@ export default function TravelHubHome() {
           </div>
         </div>
 
-        <nav className="flex items-center gap-3">
+        {!isAuthenticated ? (<nav className="flex items-center gap-3">
           <Link to="/login" className="inline-flex items-center gap-2 px-4 py-2 border rounded-lg hover:shadow-sm transition">
             <User className="w-4 h-4" />
             로그인
@@ -28,7 +32,20 @@ export default function TravelHubHome() {
           <Link to="/signup" className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
             회원가입
           </Link>
+        </nav>) : (
+        <nav className="flex items-center gap-3">
+          <Link to="/profile" className="inline-flex items-center gap-2 px-4 py-2 border rounded-lg hover:shadow-sm transition">
+            <User className="w-4 h-4" />
+            내 프로필
+          </Link>
+          <button
+            onClick={handleLogout}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+          >
+            로그아웃
+          </button>
         </nav>
+        )}
       </header>
 
       {/* Hero */}

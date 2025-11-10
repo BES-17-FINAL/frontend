@@ -4,7 +4,9 @@ import TravelHubHome from "./pages/TravelHubHome";
 import Signup from "./pages/signup";
 import Login from "./pages/login";
 import useAuthStore from "./store/authStore";
-import SearchResults from "./pages/SearchResults";
+
+import SpotDetail from "./pages/spotDetail";
+import { Navigate } from "react-router-dom";
 
 const App = () => {
 
@@ -22,7 +24,7 @@ const App = () => {
       <Routes>
         <Route path="/" element={<TravelHubHome />} />
 
-
+        <Route path="/spotDetail" element={<SpotDetail />} />
         <Route
           path="/login"
           element={isAuthenticated ? <Navigate to="/" /> : <Login />}

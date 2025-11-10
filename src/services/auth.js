@@ -2,29 +2,30 @@ import api from "./api";
 
 export const authService = {
   async login(userData) {
-    const response = await api.post("/api/auth/login", userData);
-    const { accessToken, user } = response.data;
+    const response = await api.post("/auth/login", userData);
+    const { token, nickname, email } = response.data;
     console.log("Login Response:", response.data);
-    localStorage.setItem("accessToken", accessToken);
-    localStorage.setItem("user", JSON.stringify(user));
+    localStorage.setItem("token", token);
+    localStorage.setItem("nickname", nickname);
+    localStorage.setItem("email", email);
 
     return response.data;
   },
 
   async register(userData) {
-    const response = await api.post("/api/auth/signup", userData);
+    const response = await api.post("/auth/signup", userData);
     const { accessToken, user } = response.data;
 
-    localStorage.setItem("accessToken", accessToken);
-    localStorage.setItem("user", JSON.stringify(user));
+    //localStorage.setItem("accessToken", accessToken);
+    //localStorage.setItem("user", JSON.stringify(user));
 
     return response.data;
   },
 
   logout() {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    localStorage.removeItem("nickname");
+    localStorage.removeItem("email");
   },
 
   getCurrentUser() {
