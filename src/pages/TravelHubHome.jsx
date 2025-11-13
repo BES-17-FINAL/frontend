@@ -1,16 +1,31 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Search, User } from 'lucide-react';
 import useAuthStore from '../store/authStore';
+import SpotList from '../components/spot/spotList';
+import useSpotStore from '../store/spotStore';
 // Travel Hub - Home screen
 // Usage: add this component to your React Router (e.g. path="/")
 // TailwindCSS is used for styling. Framer Motion is available if you want to add animations.
 
 export default function TravelHubHome() {
   const { isAuthenticated, logout } = useAuthStore();
+  const { getFameSpots } = useSpotStore();
+  const [ spots, setSpots ] = React.useState([]);
+
+React.useEffect(() => {
+  const fetchSpots = async () => {
+    const data = await getFameSpots(); // Promise resolve
+    setSpots(data);
+  };
+  fetchSpots();
+}, [getFameSpots]);
+
   const handleLogout = () => {
     logout(); // Zustand logout 실행 → 토큰/유저 정보 제거
   };
+
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-sky-50 to-white text-gray-900">
       {/* Header */}
@@ -91,6 +106,8 @@ export default function TravelHubHome() {
 
         {/* Grid: 지역 카드 */}
         <section className="mt-8">
+          <h3 className="text-xl font-semibold mb-4">인기 지역 둘러보기</h3>
+          <SpotList spotList={spots} />
           <h3 className="text-xl font-semibold mb-4">지역별 탐색</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
