@@ -6,7 +6,7 @@ import Login from "./pages/login";
 import useAuthStore from "./store/authStore";
 import SpotDetail from "./pages/spotDetail";
 import { Navigate } from "react-router-dom";
-
+import Community from "./pages/community";
 const App = () => {
 
   const { isAuthenticated } = useAuthStore();
@@ -31,6 +31,12 @@ const App = () => {
         <Route
           path="/signup"
           element={isAuthenticated ? <Navigate to="/" /> : <Signup />}
+        />
+        <Route
+          path="/community"
+          element={
+            <Community />
+          }
         />
 
       </Routes>
