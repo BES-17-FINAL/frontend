@@ -17,6 +17,18 @@ const useSpotStore = create((set) => ({
       return null;
     }
   },
+
+  getFameSpots: async () => {
+    set({ loading: true, error: null });
+    try {
+      const response = await spotService.getFameSpots();
+      set({ spot: response.data, loading: false });
+      return response.data;
+    } catch (error) {
+      set({ error: error.message, loading: false });
+      return null;
+    }
+  },
 }));
 
 export default useSpotStore;

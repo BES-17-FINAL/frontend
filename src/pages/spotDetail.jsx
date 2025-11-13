@@ -1,10 +1,15 @@
 import React, { useEffect, useState } from "react";
 import useSpotStore from "../store/spotStore";
 import { Star, MapPin, Clock, Phone, Globe } from 'lucide-react';
+import { useLocation } from "react-router-dom";
 
-const SpotDetail = ({ spotId = 1 }) => { // 임시값 추가
+const SpotDetail = () => { // 임시값 추가
     const { getSpot, loading, error } = useSpotStore();
     const [spot, setSpot] = useState([]);
+
+    const location = useLocation();
+    const queryParams = new URLSearchParams(location.search);
+    const spotId = queryParams.get("spotId");
 
     useEffect(() => {
       const fetchSpot = async () => {
@@ -38,9 +43,13 @@ const SpotDetail = ({ spotId = 1 }) => { // 임시값 추가
             <h2 className="text-[36px] text-black mb-3">{spot.title}</h2>
             <div className="flex items-center gap-2">
                 {[...Array(5)].map((_, i) => (
-                <Star key={i} className="w-6 h-6 fill-yellow-400 text-yellow-400" />
+                <Star key={i} className={`w-6 h-6 ${
+                          i < spot.receive
+                            ? 'fill-yellow-400 text-yellow-400'
+                            : 'fill-gray-300 text-gray-300'
+                        }`} />
               ))}
-              <span className="text-black text-[20px] ml-1">4.8</span>
+              <span className="text-black text-[20px] ml-1">{spot.receive}</span>
               <span className="text-[#666] ml-2">(1,234개의 리뷰)</span>
             </div>
           </div>
