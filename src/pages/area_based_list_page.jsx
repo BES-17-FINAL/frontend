@@ -1,56 +1,99 @@
-import React, { useEffect, useState } from 'react';
+import { useState, useEffect } from "react";
 
-export default function AreaBasedListPage() {
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
+function AreaBasedListPage() {
+  const [data, setData] = useState([]);
+  const [contentTypeId, setContentTypeId] = useState("39");
+  const [pageNo, setPageNo] = useState(1);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [page, setPage] = useState(1);
-  const perPage = 12;
 
-  useEffect(() => {
+  const fetchData = async () => {
     setLoading(true);
     setError(null);
+    try {
+      const res = await fetch(
+        `http://localhost:8080/api/area-based?contentTypeId=${contentTypeId}&numOfRows=12&pageNo=${pageNo}`
+      );
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      const json = await res.json();
+      const items = json?.response?.body?.items?.item || [];
+      setData(items);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetch(`/api/area-based?numOfRows=100&contentTypeId=39&pageNo=${page}`)
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then((data) => {
-        const list =
-          data?.response?.body?.items?.item ??
-          data?.items ??
-          [];
-        setItems(Array.isArray(list) ? list : [list]);
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, [page]);
-
-  const totalPages = Math.max(1, Math.ceil(items.length / perPage));
-  const visible = items.slice((page - 1) * perPage, page * perPage);
+  useEffect(() => {
+    fetchData();
+  }, [contentTypeId, pageNo]);
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl mb-4">관광지 목록</h1>
-      {loading && <p>로딩 중...</p>}
-      {error && <p className="text-red-600">{error}</p>}
+    <div className="bg-sky-200 p-6 font-sans">
+      <h1 className=" text-3xl font-bold mb-6">✈️ 지역 기반 관광 정보</h1>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        {visible.map((it, idx) => (
-          <div key={it.contentid ?? idx} className="p-4 border rounded">
-            <img src={it.firstimage} alt={it.title} className="h-40 w-full object-cover mb-2" />
-            <h2 className="font-medium">{it.title}</h2>
-            <p className="text-sm text-gray-600">{it.addr1 ?? it.addr}</p>
-          </div>
-        ))}
+      <div className="bg-sky-100 flex items-center rounded-xl gap-4 mb-4 pl-8 h-16">
+        <label className="font-semibold">
+          콘텐츠 타입:
+          <select
+            value={contentTypeId}
+            onChange={(e) => setContentTypeId(e.target.value)}
+            className="ml-2 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+          >
+            <option value="12">관광지</option>
+            <option value="14">문화시설</option>
+            <option value="15">축제/공연/행사</option>
+            <option value="25">여행코스</option>
+            <option value="28">레포츠</option>
+            <option value="32">숙박</option>
+            <option value="38">쇼핑</option>
+            <option value="39">음식점</option>
+          </select>
+        </label>
+        <button
+          onClick={fetchData}
+          className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
+        >
+          새로고침
+        </button>
       </div>
 
-      <div className="mt-4 flex justify-between">
-        <button onClick={() => setPage(p => Math.max(1, p-1))} disabled={page === 1}>이전</button>
-        <span>{page} / {totalPages}</span>
-        <button onClick={() => setPage(p => Math.min(totalPages, p+1))} disabled={page === totalPages}>다음</button>
-      </div>
+      {loading && <p className="text-gray-500">⏳ 불러오는 중...</p>}
+      {error && <p className="text-red-500">⚠️ 오류: {error}</p>}
+
+      {!loading && !error && data.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          {data.map((item) => (
+            <div
+              key={item.contentid}
+              className="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-xl transition"
+            >
+              {item.firstimage ? (
+                <img
+                  src={item.firstimage}
+                  alt={item.title}
+                  className="w-full h-48 object-cover"
+                />
+              ) : (
+                <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
+                  이미지 없음
+                </div>
+              )}
+              <div className="p-4">
+                <h2 className="text-lg font-bold mb-2">{item.title}</h2>
+                <p className="text-gray-600">{item.addr1 || "주소 정보 없음"}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {!loading && !error && data.length === 0 && (
+        <p className="text-gray-500 mt-6">결과가 없습니다.</p>
+      )}
     </div>
   );
 }
+
+export default AreaBasedListPage;
