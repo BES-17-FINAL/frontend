@@ -3,31 +3,28 @@ import { useNavigate } from "react-router-dom";
 
 export default function SearchBar() {
   const [query, setQuery] = useState("");
-  const [contentTypeId, setContentTypeId] = useState("12"); // 기본 관광지
+  const [contentTypeId, setContentTypeId] = useState("12"); // 관광지 기본
   const navigate = useNavigate();
 
   const handleSearch = () => {
     if (!query.trim()) return;
-    navigate(
-      `/searchresults?keyword=${encodeURIComponent(query)}&contentTypeId=${contentTypeId}`
-    );
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") handleSearch();
+    navigate(`/searchresults?keyword=${encodeURIComponent(query)}&contentTypeId=${contentTypeId}`);
   };
 
   return (
-    <div className="flex gap-2 items-center">
+    <div className="flex gap-2">
       <input
         type="text"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder="검색어를 입력하세요 (예: 서울)"
+        placeholder="검색어 입력 (예: 서울)"
         className="flex-1 p-2 border rounded-md"
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            handleSearch(); // Enter 키 누르면 검색
+          }
+        }}
       />
-
       <select
         value={contentTypeId}
         onChange={(e) => setContentTypeId(e.target.value)}
@@ -42,13 +39,7 @@ export default function SearchBar() {
         <option value="38">쇼핑</option>
         <option value="39">음식점</option>
       </select>
-
-      <button
-        onClick={handleSearch}
-        className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition"
-      >
-        검색
-      </button>
+      <button onClick={handleSearch} className="bg-blue-500 text-white px-4 py-2 rounded-md">검색</button>
     </div>
   );
 }

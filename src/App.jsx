@@ -8,6 +8,7 @@ import Login from "./pages/login";
 import SearchResults from "./pages/SearchResults";
 import SpotDetail from "./pages/spotDetail";
 import AreaBasedListPage from "./pages/area_based_list_page";
+import SearchTest from "./pages/SearchTest";
 
 // 상태 관리
 import useAuthStore from "./store/authStore";
@@ -41,6 +42,8 @@ const App = () => {
 
         {/* 검색 결과 */}
         <Route path="/searchresults" element={<SearchResults />} />
+
+        <Route path="/search-test" element={<SearchTest />} />
 
         {/* 지역 기반 관광 리스트 페이지 */}
         <Route

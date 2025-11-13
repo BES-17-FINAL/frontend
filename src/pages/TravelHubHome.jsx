@@ -68,7 +68,7 @@ export default function TravelHubHome() {
             </div>
 
             {/* simple search */}
-            <div className="mt-6 w-full max-w-md">
+            <div className="mt-6 w-full max-w-md mb-6">
               <label className="sr-only">관광지 검색</label>
                 <SearchBar apiUrl="http://localhost:8080/api/items" />
             </div>
