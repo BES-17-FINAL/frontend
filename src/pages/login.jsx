@@ -26,9 +26,8 @@ const Login = () => {
         ? { email: formData.email, password: formData.password }
         : { username: formData.email, password: formData.password };
 
-      console.log(loginData);
       await login(loginData);
-      
+      navigate("/");
     } catch (err) {
       console.error(err);
     }
@@ -41,6 +40,9 @@ const Login = () => {
     });
   };
 
+  const handleOAuthLogin = (provider) => {
+    window.location.href = `http://localhost:8080/oauth2/authorization/${provider}`;
+  };
 
   return (
     <div className="min-h-screen flex flex-col justify-center items-center bg-gradient-to-r from-indigo-500 to-sky-400">
@@ -74,9 +76,7 @@ const Login = () => {
             <Button
               className="mt-4"
               type="submit"
-              disabled={
-                loading || !formData.email || !formData.password
-              }
+              disabled={loading || !formData.email || !formData.password}
             >
               {loading ? "Logging in..." : "Log in"}
             </Button>
@@ -92,6 +92,29 @@ const Login = () => {
             <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
           </div>
 
+          {/* ✅ OAuth2 로그인 버튼들 */}
+          <div className="flex flex-col space-y-3">
+            <button
+              onClick={() => handleOAuthLogin("kakao")}
+              className="w-full bg-yellow-400 hover:bg-yellow-500 text-white font-semibold py-2 rounded-lg transition-all"
+            >
+              Kakao Login
+            </button>
+
+            <button
+              onClick={() => handleOAuthLogin("google")}
+              className="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-2 rounded-lg transition-all"
+            >
+              Google Login
+            </button>
+
+            <button
+              onClick={() => handleOAuthLogin("github")}
+              className="w-full bg-gray-800 hover:bg-gray-900 text-white font-semibold py-2 rounded-lg transition-all"
+            >
+              GitHub Login
+            </button>
+          </div>
 
           <Link
             to="/forgot-password"
@@ -112,7 +135,6 @@ const Login = () => {
             </Link>
           </p>
         </div>
-
       </div>
     </div>
   );

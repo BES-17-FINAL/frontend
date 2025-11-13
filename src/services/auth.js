@@ -1,31 +1,24 @@
 import api from "./api";
+import StorageService from "./storage";
 
 export const authService = {
   async login(userData) {
     const response = await api.post("/auth/login", userData);
     const { token, nickname, email } = response.data;
-    console.log("Login Response:", response.data);
-    localStorage.setItem("token", token);
-    localStorage.setItem("nickname", nickname);
-    localStorage.setItem("email", email);
+
+    StorageService.setAccessToken(token);
+    localStorage.setItem("user", JSON.stringify({ nickname, email }));
 
     return response.data;
   },
 
   async register(userData) {
     const response = await api.post("/auth/signup", userData);
-    const { accessToken, user } = response.data;
-
-    //localStorage.setItem("accessToken", accessToken);
-    //localStorage.setItem("user", JSON.stringify(user));
-
     return response.data;
   },
 
   logout() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("nickname");
-    localStorage.removeItem("email");
+    StorageService.clear();
   },
 
   getCurrentUser() {
@@ -34,6 +27,6 @@ export const authService = {
   },
 
   isAuthenticated() {
-    return !!localStorage.getItem("accessToken");
+    return !!StorageService.getAccessToken();
   },
 };
