@@ -7,7 +7,6 @@ import Signup from "./pages/signup";
 import Login from "./pages/login";
 import SearchResults from "./pages/SearchResults";
 import SpotDetail from "./pages/spotDetail";
-import { Navigate } from "react-router-dom";
 import Community from "./pages/community";
 import AreaBasedListPage from "./pages/area_based_list_page";
 
