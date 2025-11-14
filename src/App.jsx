@@ -7,6 +7,8 @@ import Signup from "./pages/signup";
 import Login from "./pages/login";
 import SearchResults from "./pages/SearchResults";
 import SpotDetail from "./pages/spotDetail";
+import { Navigate } from "react-router-dom";
+import Community from "./pages/community";
 import AreaBasedListPage from "./pages/area_based_list_page";
 
 // 상태 관리
@@ -37,6 +39,12 @@ const App = () => {
         <Route
           path="/signup"
           element={isAuthenticated ? <Navigate to="/" /> : <Signup />}
+        />
+        <Route
+          path="/community"
+          element={
+            <Community />
+          }
         />
 
         {/* 검색 결과 */}
