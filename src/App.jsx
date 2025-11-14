@@ -38,12 +38,9 @@ const App = () => {
           path="/signup"
           element={isAuthenticated ? <Navigate to="/" /> : <Signup />}
         />
-        <Route
-          path="/community"
-          element={
-            <Community />
-          }
-        />
+
+        {/* 커뮤니티 */}
+        <Route path="/community" element={<Community />} />
 
         {/* 검색 결과 */}
         <Route path="/search" element={<SearchResults />} />
