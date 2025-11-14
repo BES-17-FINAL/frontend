@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import SearchBar from "../components/ui/SearchBar";
 import { MapPin, Search, User } from 'lucide-react';
+
 import useAuthStore from '../store/authStore';
 import SpotList from '../components/spot/spotList';
 import useSpotStore from '../store/spotStore';
@@ -81,13 +83,9 @@ React.useEffect(() => {
             </div>
 
             {/* simple search */}
-            <div className="mt-6 w-full max-w-md">
+            <div className="mt-6 w-full max-w-md mb-6">
               <label className="sr-only">관광지 검색</label>
-              <div className="flex items-center gap-2 border rounded-lg px-3 py-2">
-                <Search className="w-4 h-4 text-gray-400" />
-                <input type="search" placeholder="예: 부산 해운대, 강릉 주문진" className="flex-1 outline-none placeholder-gray-400" />
-                <button className="px-3 py-1 bg-indigo-600 text-white rounded-md">검색</button>
-              </div>
+                <SearchBar apiUrl="http://localhost:8080/api/items" />
             </div>
           </div>
 
