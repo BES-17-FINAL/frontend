@@ -21,7 +21,6 @@ const App = () => {
 
   return (
     <BrowserRouter>
-      {/* 라우팅 */}
       <Routes>
         {/* 홈 */}
         <Route path="/" element={<TravelHubHome />} />
@@ -43,12 +42,9 @@ const App = () => {
         <Route path="/searchresults" element={<SearchResults />} />
 
         {/* 지역 기반 관광 리스트 페이지 */}
-        <Route
-          path="/explore"
-          element={<AreaBasedListPage />}
-        />
+        <Route path="/explore" element={<AreaBasedListPage />} />
 
-        {/* 존재하지 않는 경로 처리 (optional) */}
+        {/* 존재하지 않는 경로 처리 */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>

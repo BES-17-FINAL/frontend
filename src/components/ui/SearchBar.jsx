@@ -1,45 +1,29 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Search } from "lucide-react";
 
-export default function SearchBar() {
-  const [query, setQuery] = useState("");
-  const [contentTypeId, setContentTypeId] = useState("12"); // 관광지 기본
-  const navigate = useNavigate();
+export default function SearchBar({ onSearch }) {
+  const [input, setInput] = useState("");
 
-  const handleSearch = () => {
-    if (!query.trim()) return;
-    navigate(`/searchresults?keyword=${encodeURIComponent(query)}&contentTypeId=${contentTypeId}`);
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (onSearch) onSearch(input);
   };
 
   return (
-    <div className="flex gap-2">
+    <form onSubmit={handleSubmit} className="flex gap-2 w-full">
       <input
         type="text"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="검색어 입력 (예: 서울)"
-        className="flex-1 p-2 border rounded-md"
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            handleSearch(); // Enter 키 누르면 검색
-          }
-        }}
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        placeholder="검색어를 입력하세요"
+        className="flex-1 p-2 border border-gray-300 rounded"
       />
-      <select
-        value={contentTypeId}
-        onChange={(e) => setContentTypeId(e.target.value)}
-        className="p-2 border rounded-md"
+      <button
+        type="submit"
+        className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
       >
-        <option value="12">관광지</option>
-        <option value="14">문화시설</option>
-        <option value="15">축제/공연/행사</option>
-        <option value="25">여행코스</option>
-        <option value="28">레포츠</option>
-        <option value="32">숙박</option>
-        <option value="38">쇼핑</option>
-        <option value="39">음식점</option>
-      </select>
-      <button onClick={handleSearch} className="bg-blue-500 text-white px-4 py-2 rounded-md">검색</button>
-    </div>
+        <Search className="w-4 h-4" />
+      </button>
+    </form>
   );
 }
