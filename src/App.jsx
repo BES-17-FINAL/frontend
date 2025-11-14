@@ -39,7 +39,7 @@ const App = () => {
         />
 
         {/* 검색 결과 */}
-        <Route path="/searchresults" element={<SearchResults />} />
+        <Route path="/search" element={<SearchResults />} />
 
         {/* 지역 기반 관광 리스트 페이지 */}
         <Route path="/explore" element={<AreaBasedListPage />} />

@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import SearchBar from "../components/ui/SearchBar";
+import Header from "../components/layout/Header";
 
 export default function SearchResults() {
   const [places, setPlaces] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [inputKeyword, setInputKeyword] = useState("");
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -14,11 +14,6 @@ export default function SearchResults() {
   const queryParams = new URLSearchParams(location.search);
   const keyword = queryParams.get("keyword") || "";
   const contentTypeId = queryParams.get("contentTypeId");
-
-  // 초기값 설정
-  useEffect(() => {
-    setInputKeyword(keyword);
-  }, [keyword]);
 
   // URL 변경 시 검색 실행
   useEffect(() => {
@@ -46,64 +41,66 @@ export default function SearchResults() {
     };
 
     fetchPlaces();
-  }, [location.search]);
+  }, [keyword, contentTypeId]);
 
-  // 검색 버튼 클릭 시 URL 갱신
   const handleSearch = (keyword) => {
     if (!keyword.trim()) return;
-    navigate({
-      pathname: "/search",
-      search: `?keyword=${encodeURIComponent(keyword)}${
-        contentTypeId ? `&contentTypeId=${contentTypeId}` : ""
-      }`,
-    });
+    navigate(`/search?keyword=${encodeURIComponent(keyword)}${
+      contentTypeId ? `&contentTypeId=${contentTypeId}` : ""
+    }`);
   };
 
   return (
-    <div className="min-h-screen p-6 bg-gray-50 flex flex-col md:flex-row gap-6">
-      {/* 검색 결과 */}
-      <div className="flex-1">
-        <h2 className="text-3xl font-bold mb-6">"{keyword}" 검색 결과</h2>
-        {loading && <p>⏳ 검색 중...</p>}
-        {error && <p className="text-red-500">{error}</p>}
-        {!loading && !error && places.length === 0 && <p>검색 결과가 없습니다.</p>}
+    <div className="min-h-screen bg-gray-50">
+      <Header />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {places.map((place) => (
-            <div
-              key={place.title}
-              className="bg-white rounded-lg shadow-md overflow-hidden"
-            >
-              {place.firstImage ? (
-                <img
-                  src={place.firstImage}
-                  alt={place.title}
-                  className="w-full h-40 object-cover"
-                />
-              ) : (
-                <div className="w-full h-40 bg-gray-200 flex items-center justify-center">
-                  이미지 없음
-                </div>
-              )}
-              <div className="p-4">
-                <h3 className="font-semibold">{place.title}</h3>
-                <p className="text-gray-600">{place.address}</p>
+      <div className="max-w-6xl mx-auto px-6 mt-6 flex flex-col md:flex-row gap-6">
+        {/* 메인 콘텐츠 */}
+        <div className="flex-1">
+          {/* 제목 + 검색창 상단 */}
+          <div className="flex flex-col md:flex-row md:items-center gap-20 mb-6">
+            <h2 className="text-3xl font-bold">"{keyword}" 검색 결과</h2>
+            <div className="w-full md:w-96 flex-shrink-0">
+              <div className="sticky top-8 bg-white p-4 rounded shadow-md">
+                <SearchBar onSearch={handleSearch} />
               </div>
             </div>
-          ))}
-        </div>
+          </div>
 
-        <div className="mt-6">
-          <Link to="/" className="text-indigo-600 hover:underline">
-            ← 홈으로 돌아가기
-          </Link>
-        </div>
-      </div>
+          {/* 검색 상태 메시지 */}
+          {loading && <p>⏳ 검색 중...</p>}
+          {error && <p className="text-red-500">{error}</p>}
+          {!loading && !error && places.length === 0 && <p>검색 결과가 없습니다.</p>}
 
-      {/* 검색창 */}
-      <div className="w-full md:w-64 flex-shrink-0">
-        <div className="sticky top-6 bg-white p-4 rounded shadow-md">
-          <SearchBar onSearch={handleSearch} />
+          {/* 검색 결과 카드 */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            {places.map((place) => (
+              <div key={place.title} className="bg-white rounded-lg shadow-md overflow-hidden">
+                {place.firstImage ? (
+                  <img
+                    src={place.firstImage}
+                    alt={place.title}
+                    className="w-full h-40 object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-40 bg-gray-200 flex items-center justify-center">
+                    이미지 없음
+                  </div>
+                )}
+                <div className="p-4">
+                  <h3 className="font-semibold">{place.title}</h3>
+                  <p className="text-gray-600">{place.address}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* 홈으로 돌아가기 */}
+          <div className="mt-6">
+            <Link to="/" className="text-indigo-600 hover:underline">
+              ← 홈으로 돌아가기
+            </Link>
+          </div>
         </div>
       </div>
     </div>

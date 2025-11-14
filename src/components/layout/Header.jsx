@@ -1,28 +1,29 @@
-// src/components/layout/Header.jsx
-import { Link } from "react-router-dom";
+import React from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { User } from "lucide-react";
 import useAuthStore from "../../store/authStore";
 
 export default function Header() {
+  const navigate = useNavigate();
   const { isAuthenticated, logout } = useAuthStore();
 
-  const handleLogout = () => logout();
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
 
   return (
     <header className="max-w-6xl mx-auto px-6 py-6 flex items-center justify-between">
-      {/* 로고 + 홈 이동 */}
-      <div className="flex items-center gap-3">
-        <Link
-          to="/"
-          className="w-10 h-10 rounded-2xl bg-gradient-to-r from-indigo-500 to-sky-400 flex items-center justify-center text-white font-bold text-lg"
-        >
+      {/* 로고 + 사이트 타이틀 */}
+      <Link to="/" className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-2xl bg-gradient-to-r from-indigo-500 to-sky-400 flex items-center justify-center text-white font-bold text-lg">
           TH
-        </Link>
+        </div>
         <div>
           <h1 className="text-lg font-semibold">Travel Hub</h1>
           <p className="text-xs text-gray-500">지역별 관광정보 한눈에</p>
         </div>
-      </div>
+      </Link>
 
       {/* 로그인 / 회원가입 또는 프로필 / 로그아웃 */}
       {!isAuthenticated ? (

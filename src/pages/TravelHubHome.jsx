@@ -23,7 +23,7 @@ export default function TravelHubHome() {
   // 검색 시 SearchResults 페이지로 이동
   const handleSearch = (keyword) => {
     if (!keyword.trim()) return;
-    navigate(`/searchresults?keyword=${encodeURIComponent(keyword)}`);
+    navigate(`/search?keyword=${encodeURIComponent(keyword)}`);
   };
 
   return (
