@@ -75,7 +75,11 @@ export default function SearchResults() {
           {/* 검색 결과 카드 */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {places.map((place) => (
-              <div key={place.title} className="bg-white rounded-lg shadow-md overflow-hidden">
+              <div
+                key={place.title}
+                className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition"
+                onClick={() => navigate(`/spot/${place.id}/${place.apiType}`)}
+              >
                 {place.firstImage ? (
                   <img
                     src={place.firstImage}

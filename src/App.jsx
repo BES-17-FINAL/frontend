@@ -9,6 +9,7 @@ import SearchResults from "./pages/SearchResults";
 import SpotDetail from "./pages/spotDetail";
 import Community from "./pages/community";
 import AreaBasedListPage from "./pages/area_based_list_page";
+import FestivalListPage from "./pages/FestivalListPage";
 
 // 상태 관리
 import useAuthStore from "./store/authStore";
@@ -44,12 +45,22 @@ const App = () => {
 
         {/* 검색 결과 */}
         <Route path="/search" element={<SearchResults />} />
+        
+        {/* 관광지 상세 페이지로 이동 */}
+        <Route path="/spot/:id/:type" element={<SpotDetail />} />
 
         {/* 지역 기반 관광 리스트 페이지 */}
         <Route path="/explore" element={<AreaBasedListPage />} />
 
+
+        {/* 지역 축제 관광 리스트 페이지 */}
+        <Route path="/festivals" element={<FestivalListPage />} />
+
+
         {/* 존재하지 않는 경로 처리 */}
         <Route path="*" element={<Navigate to="/" />} />
+
+
       </Routes>
     </BrowserRouter>
   );
