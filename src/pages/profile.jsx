@@ -2,11 +2,11 @@ import { useEffect, useState } from 'react';
 import { Star, Heart, MessageCircle, Calendar, MapPin, Camera, Edit2, X, Check } from 'lucide-react';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import useUserStore from '../store/userStore';
+import usePostStore from '../store/postStore';
 
-
-export function UserProfile({ userId, onBack }) {
+export function UserProfile() {
   const { getUser, editUser } = useUserStore();
-  
+  const { getUserPost } = usePostStore();
   const [profile, setProfile] = useState([]);
 
   const [activeTab, setActiveTab] = useState('reviews'); // reviews, posts, comments
@@ -14,6 +14,7 @@ export function UserProfile({ userId, onBack }) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [userName, setUserName] = useState("");
   const [nickName, setNickName] = useState("");
+  const [posts, setPosts] = useState([]);
 
   const handleImageUpload = (e) => {
     const file = e.target.files?.[0];
@@ -48,14 +49,15 @@ export function UserProfile({ userId, onBack }) {
     useEffect(() => {
         const fetchUser = async () => {
             const data = await getUser();
+            const postData = await getUserPost();
             setProfile(data);
+            setPosts(postData);
         }
         fetchUser();
-    }, [getUser])
+    }, [getUser, getUserPost])
 
   // 예시 유저 데이터
   const user = {
-    id: userId,
     name: '김철수',
     joinDate: '2024.01.15',
     bio: '여행을 좋아하는 평범한 직장인입니다. 주로 국내 여행을 다니며 맛집과 힐링 장소를 찾아다닙니다.',
@@ -157,7 +159,7 @@ export function UserProfile({ userId, onBack }) {
     <div className="max-w-[1000px] mx-auto px-6 py-8">
       {/* 뒤로가기 버튼 */}
       <button
-        onClick={onBack}
+        onClick={() => {}}
         className="mb-6 px-6 py-2 border-2 border-[#dedede] text-black hover:border-[#4442dd] rounded-lg transition-colors"
       >
         ← 뒤로가기
@@ -170,7 +172,7 @@ export function UserProfile({ userId, onBack }) {
           <div className="relative group">
             <div className="w-48 h-48 rounded-full overflow-hidden border-2 border-[#4442dd]">
               <ImageWithFallback
-                src={profileImage}
+                src={profileImage || null}
                 alt=''
                 className="w-full h-full object-cover block"
               />
@@ -219,7 +221,7 @@ export function UserProfile({ userId, onBack }) {
                 <div className="text-[14px] text-[#666]">리뷰</div>
               </div>
               <div className="text-center">
-                <div className="text-[24px] text-[#4442dd]">{user.stats.posts}</div>
+                <div className="text-[24px] text-[#4442dd]">{posts ? posts.length : "0"}</div>
                 <div className="text-[14px] text-[#666]">게시글</div>
               </div>
               <div className="text-center">
