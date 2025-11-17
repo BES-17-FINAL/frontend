@@ -1,4 +1,5 @@
 import api from "./api";
+import StorageService from "./storage";
 
 export const authService = {
   async login(userData) {
@@ -8,6 +9,7 @@ export const authService = {
     if (token) {
       localStorage.setItem("token", token);
       localStorage.setItem("accessToken", token);
+      StorageService.setAccessToken(token);
     }
     if (nickname) {
       localStorage.setItem("nickname", nickname);
@@ -17,6 +19,8 @@ export const authService = {
     }
     if (user) {
       localStorage.setItem("user", JSON.stringify(user));
+    } else if (nickname || email) {
+      localStorage.setItem("user", JSON.stringify({ nickname, email }));
     }
 
     return response.data;
@@ -24,15 +28,11 @@ export const authService = {
 
   async register(userData) {
     const response = await api.post("/auth/signup", userData);
-    const { accessToken, user } = response.data;
-
-    //localStorage.setItem("accessToken", accessToken);
-    //localStorage.setItem("user", JSON.stringify(user));
-
     return response.data;
   },
 
   logout() {
+    StorageService.clear();
     localStorage.removeItem("token");
     localStorage.removeItem("accessToken");
     localStorage.removeItem("nickname");
@@ -46,6 +46,6 @@ export const authService = {
   },
 
   isAuthenticated() {
-    return !!(localStorage.getItem("accessToken") || localStorage.getItem("token"));
+    return !!(StorageService.getAccessToken() || localStorage.getItem("accessToken") || localStorage.getItem("token"));
   },
 };
