@@ -3,10 +3,12 @@ import { Star, Heart, MessageCircle, Calendar, MapPin, Camera, Edit2, X, Check }
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import useUserStore from '../store/userStore';
 import usePostStore from '../store/postStore';
+import useReviewStore from '../store/reviewStore';
 
 export function UserProfile() {
   const { getUser, editUser } = useUserStore();
   const { getUserPost } = usePostStore();
+  const { getMyReviews } = useReviewStore();
   const [profile, setProfile] = useState([]);
 
   const [activeTab, setActiveTab] = useState('reviews'); // reviews, posts, comments
@@ -15,6 +17,7 @@ export function UserProfile() {
   const [userName, setUserName] = useState("");
   const [nickName, setNickName] = useState("");
   const [posts, setPosts] = useState([]);
+  const [reviews, setReviews] = useState([]);
 
   const handleImageUpload = (e) => {
     const file = e.target.files?.[0];
@@ -50,11 +53,25 @@ export function UserProfile() {
         const fetchUser = async () => {
             const data = await getUser();
             const postData = await getUserPost();
+            const reviewData = await getMyReviews();
             setProfile(data);
             setPosts(postData);
+            setReviews(reviewData);
         }
         fetchUser();
     }, [getUser, getUserPost])
+
+
+    const formatDate = (isoString) => {
+      const date = new Date(isoString);
+      return date.toLocaleString("ko-KR", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    };
 
   // 예시 유저 데이터
   const user = {
@@ -217,7 +234,7 @@ export function UserProfile() {
             {/* 통계 */}
             <div className="flex gap-6">
               <div className="text-center">
-                <div className="text-[24px] text-[#4442dd]">{user.stats.reviews}</div>
+                <div className="text-[24px] text-[#4442dd]">{reviews ? reviews.length : "0"}</div>
                 <div className="text-[14px] text-[#666]">리뷰</div>
               </div>
               <div className="text-center">
@@ -272,7 +289,7 @@ export function UserProfile() {
         {/* 리뷰 탭 */}
         {activeTab === 'reviews' && (
           <>
-            {userReviews.map((review) => (
+            {reviews.map((review) => (
               <div
                 key={review.id}
                 className="bg-white border-2 border-[#dedede] rounded-lg p-6 hover:border-[#4442dd] hover:shadow-md transition-all cursor-pointer"
@@ -295,8 +312,8 @@ export function UserProfile() {
                     ))}
                   </div>
                 </div>
-                <p className="text-[16px] text-[#333] mb-3 line-clamp-2">{review.content}</p>
-                <div className="text-[14px] text-[#666]">{review.date}</div>
+                <p className="text-[16px] text-[#333] mb-3 line-clamp-2">{review.comment}</p>
+                <div className="text-[14px] text-[#666]">{review.createdAt}</div>
               </div>
             ))}
           </>

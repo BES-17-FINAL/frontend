@@ -40,6 +40,18 @@ const useReviewStore = create((set) => ({
       set({ error: error.message, loading: false });
       return null;
     }
+  },
+
+  getMyReviews: async () => {
+    set({ loading: true, error: null });
+    try {
+      const response = await reviewService.getMyReviews();
+      set({ spot: response.data, loading: false });
+      return response.data;
+    } catch (error) {
+      set({ error: error.message, loading: false });
+      return null;
+    }
   }
 }))
 
