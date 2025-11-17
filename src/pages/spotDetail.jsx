@@ -1,25 +1,58 @@
 import React, { useEffect, useState } from "react";
 import useSpotStore from "../store/spotStore";
 import { Star, MapPin, Clock, Phone, Globe } from 'lucide-react';
-import { useLocation } from "react-router-dom";
-
+import { useLocation, useNavigate } from "react-router-dom";
+import useReviewStore from "../store/reviewStore";
+import { ReviewWriteModal } from "../components/review/ReviewWriteModal";
 const SpotDetail = () => { // 임시값 추가
     const { getSpot, loading, error } = useSpotStore();
+    const { getAverageRating, getReviews, addReview} = useReviewStore();
+
     const [spot, setSpot] = useState([]);
+    const [rating, setRating] = useState(0);
+    const [reviews, setReviews] = useState([]);
+    const [isReview, setIsReview] = useState(false);
 
     const location = useLocation();
+    const navigate = useNavigate();
     const queryParams = new URLSearchParams(location.search);
     const spotId = queryParams.get("spotId");
 
     useEffect(() => {
       const fetchSpot = async () => {
         const data = await getSpot(spotId);
-        console.log(data);
         setSpot(data);
       };
       fetchSpot();
     }, [getSpot]);
 
+     useEffect(() => {
+      const fetchSpot = async () => {
+        const rating = await getAverageRating(spotId);
+        setRating(rating);
+      };
+      fetchSpot();
+    }, [getAverageRating]);
+
+    useEffect(() => {
+      const fetchSpot = async () => {
+        const reviews = await getReviews(spotId);
+        setReviews(reviews);
+      };
+      fetchSpot();
+    }, [getReviews]);
+
+
+  const handleBack = () => {
+    navigate(-1); // 브라우저 히스토리에서 한 단계 뒤로
+  };
+
+  const handleSubmit = async ( data ) =>  {
+    console.log(data)
+    await addReview(spotId, data);
+    setIsReview(false);
+    window.location.reload();
+  }
 
   return (
     <div className="bg-white min-h-screen">
@@ -33,7 +66,12 @@ const SpotDetail = () => { // 임시값 추가
         </div>
 
         <nav className="flex items-center gap-3">
-
+          <button
+            onClick={handleBack}
+            className="mb-6 px-6 py-2 border-2 border-[#dedede] text-black hover:border-[#4442dd] rounded-lg transition-colors bg-blue-500 text-white"
+          >
+            뒤로가기
+          </button>
         </nav>
       </header>
 
@@ -44,13 +82,13 @@ const SpotDetail = () => { // 임시값 추가
             <div className="flex items-center gap-2">
                 {[...Array(5)].map((_, i) => (
                 <Star key={i} className={`w-6 h-6 ${
-                          i < spot.receive
+                          i < rating
                             ? 'fill-yellow-400 text-yellow-400'
                             : 'fill-gray-300 text-gray-300'
                         }`} />
               ))}
-              <span className="text-black text-[20px] ml-1">{spot.receive}</span>
-              <span className="text-[#666] ml-2">(1,234개의 리뷰)</span>
+              <span className="text-black text-[20px] ml-1">{rating}</span>
+              <span className="text-[#666] ml-2">({reviews.length}개의 리뷰)</span>
             </div>
           </div>
         </div>
@@ -119,46 +157,25 @@ const SpotDetail = () => { // 임시값 추가
         <div>
             <div className="flex items-center justify-between mb-6">
                 <h2 className="text-[24px] text-black">리뷰</h2>
-                    <button className="px-6 py-2 bg-[#4442dd] text-white rounded-lg hover:bg-[#3331cc] transition-colors">
+                    <button
+                      className="px-6 py-2 bg-[#4442dd] text-white rounded-lg hover:bg-[#3331cc] transition-colors"
+                      onClick={() => setIsReview(true)}
+                    >
                     리뷰 작성
                     </button>
             </div>
              <div className="space-y-4">
-            {[
-              { 
-                name: '김철수', 
-                date: '2025.11.03', 
-                rating: 5, 
-                content: '정말 멋진 곳이었어요! 경복궁의 웅장함과 아름다움에 감탄했습니다. 특히 근정전 앞에서 본 풍경이 인상적이었어요. 가족들과 함께 방문했는데 모두 만족했습니다.' 
-              },
-              { 
-                name: '이영희', 
-                date: '2025.11.01', 
-                rating: 4, 
-                content: '경치가 아름답고 볼거리가 많았습니다. 한국의 역사와 문화를 느낄 수 있는 좋은 장소예요. 다만 주말이라 사람이 많아서 조금 복잡했어요.' 
-              },
-              { 
-                name: '박민수', 
-                date: '2025.10.28', 
-                rating: 5, 
-                content: '친구들에게 추천하고 싶은 관광지입니다. 사진 찍기 좋은 포인트가 많고, 한복을 입고 방문하면 무료 입장이라는 점도 좋았어요!' 
-              },
-              { 
-                name: 'Sarah Kim', 
-                date: '2025.10.25', 
-                rating: 5, 
-                content: 'Amazing historical site! The architecture is stunning and the palace grounds are beautifully maintained. A must-visit when in Seoul.' 
-              },
-            ].map((review, index) => (
+            {isReview && <ReviewWriteModal onClose={() => setIsReview(false)} onSubmit={handleSubmit}/>}
+            {reviews.map((review, index) => (
               <div key={index} className="bg-[#f5f5f5] rounded-lg p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-full bg-[#dedede] flex items-center justify-center">
-                      <span className="text-[#666] text-[18px]">{review.name[0]}</span>
+                      <span className="text-[#666] text-[18px]">{review.nickname[0]}</span>
                     </div>
                     <div>
-                      <p className="text-[16px] text-black">{review.name}</p>
-                      <p className="text-[14px] text-[#666]">{review.date}</p>
+                      <p className="text-[16px] text-black">{review.nickname}</p>
+                      <p className="text-[14px] text-[#666]">{review.createdAt}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
@@ -175,7 +192,7 @@ const SpotDetail = () => { // 임시값 추가
                   </div>
                 </div>
                 <p className="text-[16px] text-[#333] leading-relaxed">
-                  {review.content}
+                  {review.comment}
                 </p>
               </div>
             ))}
