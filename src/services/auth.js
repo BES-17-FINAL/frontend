@@ -3,11 +3,21 @@ import api from "./api";
 export const authService = {
   async login(userData) {
     const response = await api.post("/auth/login", userData);
-    const { token, nickname, email } = response.data;
+    const { token, nickname, email, user } = response.data;
     console.log("Login Response:", response.data);
-    localStorage.setItem("token", token);
-    localStorage.setItem("nickname", nickname);
-    localStorage.setItem("email", email);
+    if (token) {
+      localStorage.setItem("token", token);
+      localStorage.setItem("accessToken", token);
+    }
+    if (nickname) {
+      localStorage.setItem("nickname", nickname);
+    }
+    if (email) {
+      localStorage.setItem("email", email);
+    }
+    if (user) {
+      localStorage.setItem("user", JSON.stringify(user));
+    }
 
     return response.data;
   },
@@ -24,8 +34,10 @@ export const authService = {
 
   logout() {
     localStorage.removeItem("token");
+    localStorage.removeItem("accessToken");
     localStorage.removeItem("nickname");
     localStorage.removeItem("email");
+    localStorage.removeItem("user");
   },
 
   getCurrentUser() {
@@ -34,6 +46,6 @@ export const authService = {
   },
 
   isAuthenticated() {
-    return !!localStorage.getItem("accessToken");
+    return !!(localStorage.getItem("accessToken") || localStorage.getItem("token"));
   },
 };
