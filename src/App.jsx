@@ -9,7 +9,7 @@ import SearchResults from "./pages/SearchResults";
 import SpotDetail from "./pages/spotDetail";
 import Community from "./pages/community";
 import AreaBasedListPage from "./pages/area_based_list_page";
-
+import { UserProfile } from "./pages/profile"
 // 상태 관리
 import useAuthStore from "./store/authStore";
 
@@ -50,6 +50,8 @@ const App = () => {
 
         {/* 존재하지 않는 경로 처리 */}
         <Route path="*" element={<Navigate to="/" />} />
+
+        <Route path="/profile" element={isAuthenticated ?<UserProfile /> : <Navigate to="login" />} />
       </Routes>
     </BrowserRouter>
   );
