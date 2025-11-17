@@ -2,10 +2,19 @@ import React, { useEffect, useState } from "react";
 import useSpotStore from "../store/spotStore";
 import { Star, MapPin, Clock, Phone, Globe } from 'lucide-react';
 import { useLocation } from "react-router-dom";
+import useReviewStore from "../store/reviewStore";
+import Header from "../components/layout/Header";
 
 const SpotDetail = () => { // 임시값 추가
     const { getSpot, loading, error } = useSpotStore();
+    const { addReview, getReviews, getAverageRating} = useReviewStore();
+
+    const [rating, setRating] = useState(0);
+    const [hoverRating, setHoverRating] = useState(0);
     const [spot, setSpot] = useState([]);
+    const [reviews, setReviews] = useState([]);
+    const [AverageRating, setAverageRating] = useState(0);
+    const [comment, setComment] = useState("")
 
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
@@ -14,28 +23,44 @@ const SpotDetail = () => { // 임시값 추가
     useEffect(() => {
       const fetchSpot = async () => {
         const data = await getSpot(spotId);
-        console.log(data);
+        const review = await getReviews(spotId);
+        const rating = await getAverageRating(spotId);
+        setReviews(review)
+        setAverageRating(rating);
         setSpot(data);
+        
       };
       fetchSpot();
-    }, [getSpot]);
+    }, [getSpot, getReviews, getAverageRating]);
 
 
+    const reviewCreate = async() => {
+      await addReview(spotId, {
+        rating,
+        comment
+      })
+      const review = await getReviews(spotId);
+        setReviews(review)
+    }
+
+    const formatDate = (isoString) => {
+      const date = new Date(isoString);
+      return date.toLocaleString("ko-KR", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    };
+
+    const handleComment = (e) => {
+      setComment(e.target.value);
+    }
   return (
     <div className="bg-white min-h-screen">
-      <header className="max-w-6xl mx-auto px-6 py-6 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-r from-indigo-500 to-sky-400 flex items-center justify-center text-white font-bold text-lg">TH</div>
-          <div>
-            <h1 className="text-lg font-semibold">Travel Hub</h1>
-            <p className="text-xs text-gray-500">지역별 관광정보 한눈에</p>
-          </div>
-        </div>
+      <Header />
 
-        <nav className="flex items-center gap-3">
-
-        </nav>
-      </header>
 
       <div className="max-w-[1200px] mx-auto px-8 py-12">
         <div className="mb-12">
@@ -44,13 +69,13 @@ const SpotDetail = () => { // 임시값 추가
             <div className="flex items-center gap-2">
                 {[...Array(5)].map((_, i) => (
                 <Star key={i} className={`w-6 h-6 ${
-                          i < spot.receive
+                          i < AverageRating
                             ? 'fill-yellow-400 text-yellow-400'
                             : 'fill-gray-300 text-gray-300'
                         }`} />
               ))}
               <span className="text-black text-[20px] ml-1">{spot.receive}</span>
-              <span className="text-[#666] ml-2">(1,234개의 리뷰)</span>
+              <span className="text-[#666] ml-2">({spot?.receive?.length || 0}개의 리뷰)</span>
             </div>
           </div>
         </div>
@@ -117,68 +142,100 @@ const SpotDetail = () => { // 임시값 추가
                 </p>
           </div>
         <div>
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-col mb-6">
                 <h2 className="text-[24px] text-black">리뷰</h2>
-                    <button className="px-6 py-2 bg-[#4442dd] text-white rounded-lg hover:bg-[#3331cc] transition-colors">
-                    리뷰 작성
-                    </button>
+
+                <div>
+            <label className="block text-[16px] text-black mb-3">
+              별점 <span className="text-[#ff6b6b]">*</span>
+            </label>
+            <div className="flex items-center gap-2">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  onClick={() => setRating(star)}
+                  onMouseEnter={() => setHoverRating(star)}
+                  onMouseLeave={() => setHoverRating(0)}
+                  className="transition-transform hover:scale-110"
+                >
+                  <Star
+                    className={`w-10 h-10 ${
+                      star <= (hoverRating || rating)
+                        ? 'fill-yellow-400 text-yellow-400'
+                        : 'fill-gray-300 text-gray-300'
+                    }`}
+                  />
+                </button>
+              ))}
+              <span className="text-[20px] text-black ml-2">
+                {rating > 0 ? `${rating}.0` : ''}
+              </span>
             </div>
-             <div className="space-y-4">
-            {[
-              { 
-                name: '김철수', 
-                date: '2025.11.03', 
-                rating: 5, 
-                content: '정말 멋진 곳이었어요! 경복궁의 웅장함과 아름다움에 감탄했습니다. 특히 근정전 앞에서 본 풍경이 인상적이었어요. 가족들과 함께 방문했는데 모두 만족했습니다.' 
-              },
-              { 
-                name: '이영희', 
-                date: '2025.11.01', 
-                rating: 4, 
-                content: '경치가 아름답고 볼거리가 많았습니다. 한국의 역사와 문화를 느낄 수 있는 좋은 장소예요. 다만 주말이라 사람이 많아서 조금 복잡했어요.' 
-              },
-              { 
-                name: '박민수', 
-                date: '2025.10.28', 
-                rating: 5, 
-                content: '친구들에게 추천하고 싶은 관광지입니다. 사진 찍기 좋은 포인트가 많고, 한복을 입고 방문하면 무료 입장이라는 점도 좋았어요!' 
-              },
-              { 
-                name: 'Sarah Kim', 
-                date: '2025.10.25', 
-                rating: 5, 
-                content: 'Amazing historical site! The architecture is stunning and the palace grounds are beautifully maintained. A must-visit when in Seoul.' 
-              },
-            ].map((review, index) => (
-              <div key={index} className="bg-[#f5f5f5] rounded-lg p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-[#dedede] flex items-center justify-center">
-                      <span className="text-[#666] text-[18px]">{review.name[0]}</span>
-                    </div>
-                    <div>
-                      <p className="text-[16px] text-black">{review.name}</p>
-                      <p className="text-[14px] text-[#666]">{review.date}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`w-5 h-5 ${
-                          i < review.rating
-                            ? 'fill-yellow-400 text-yellow-400'
-                            : 'fill-gray-300 text-gray-300'
-                        }`}
-                      />
-                    ))}
+          </div>
+                <div className="mb-6 bg-[#f5f5f5] rounded-lg p-4">
+                  <textarea
+                    placeholder="리뷰를 입력하세요..."
+                    className="w-full p-3 border-2 border-[#dedede] rounded-lg focus:outline-none focus:border-[#4442dd] resize-none"
+                    onChange={handleComment}
+                    rows={3}
+                  />
+                  <div className="flex justify-end mt-2">
+                    <button className="px-6 py-2 bg-[#4442dd] text-white rounded-lg hover:bg-[#3331cc] transition-colors"
+                      onClick={() =>{reviewCreate()}}
+                    >
+                      리뷰 작성
+                    </button>
                   </div>
                 </div>
-                <p className="text-[16px] text-[#333] leading-relaxed">
-                  {review.content}
-                </p>
-              </div>
-            ))}
+            </div>
+             <div className="space-y-4">
+              {reviews?.map((review, index) => (
+                <div 
+                  key={index}
+                  className="bg-white border border-gray-200 rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow"
+                >
+                  {/* 사용자 정보 + 별점 */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      {/* 프로필 이미지 자리 */}
+                      <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 text-lg font-semibold">
+                        {review?.nickname?.[0] || "?"}
+                      </div>
+
+                      <div>
+                        <p className="text-[16px] text-black font-medium">
+                          {review?.nickname}
+                        </p>
+                        <p className="text-[13px] text-gray-500">
+                          {formatDate(review?.createdAt)}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* 별점 */}
+                    <div className="flex items-center gap-1">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`w-5 h-5 ${
+                            i < review.rating
+                              ? "fill-yellow-400 text-yellow-400"
+                              : "fill-gray-300 text-gray-300"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 리뷰 텍스트(코멘트) */}
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <p className="text-[15px] text-gray-700 leading-relaxed whitespace-pre-line">
+                      {review?.comment}
+                    </p>
+                  </div>
+                </div>
+              ))}
              </div>
         </div>
       </div>
