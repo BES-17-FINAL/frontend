@@ -29,11 +29,24 @@ export default function SearchResults() {
         const url = `http://localhost:8080/api/search?keyword=${encodeURIComponent(
           keyword
         )}${contentTypeId ? `&contentTypeId=${contentTypeId}` : ""}`;
-        const res = await fetch(url);
+
+        // ✅ fetch 호출
+        const res = await fetch(url, {
+          method: "GET",
+          // credentials: "omit",  // 기본값 omit → 쿠키 포함 안 함
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+
         const data = await res.json();
         setPlaces(data);
       } catch (err) {
-        console.error(err);
+        console.error("검색 fetch 오류:", err);
         setError("검색 중 오류 발생");
       } finally {
         setLoading(false);
@@ -45,9 +58,11 @@ export default function SearchResults() {
 
   const handleSearch = (keyword) => {
     if (!keyword.trim()) return;
-    navigate(`/search?keyword=${encodeURIComponent(keyword)}${
-      contentTypeId ? `&contentTypeId=${contentTypeId}` : ""
-    }`);
+    navigate(
+      `/search?keyword=${encodeURIComponent(keyword)}${
+        contentTypeId ? `&contentTypeId=${contentTypeId}` : ""
+      }`
+    );
   };
 
   return (
@@ -55,9 +70,7 @@ export default function SearchResults() {
       <Header />
 
       <div className="max-w-6xl mx-auto px-6 mt-6 flex flex-col md:flex-row gap-6">
-        {/* 메인 콘텐츠 */}
         <div className="flex-1">
-          {/* 제목 + 검색창 상단 */}
           <div className="flex flex-col md:flex-row md:items-center gap-20 mb-6">
             <h2 className="text-3xl font-bold">"{keyword}" 검색 결과</h2>
             <div className="w-full md:w-96 flex-shrink-0">
@@ -67,18 +80,26 @@ export default function SearchResults() {
             </div>
           </div>
 
-          {/* 검색 상태 메시지 */}
           {loading && <p>⏳ 검색 중...</p>}
           {error && <p className="text-red-500">{error}</p>}
           {!loading && !error && places.length === 0 && <p>검색 결과가 없습니다.</p>}
 
-          {/* 검색 결과 카드 */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {places.map((place) => (
               <div
-                key={place.title}
+                key={place.id} // 🔑 key를 title에서 id로 변경
                 className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition"
-                onClick={() => navigate(`/spot/${place.id}/${place.apiType}`)}
+                onClick={() => {
+                  const contentId = Number(place.id);
+                  const contentTypeId = Number(place.apiType);
+
+                  if (!contentId || !contentTypeId) {
+                    alert("잘못된 관광지 정보입니다.");
+                    return;
+                  }
+
+                  navigate(`/spot/${contentId}?contentTypeId=${contentTypeId}`);
+                }}
               >
                 {place.firstImage ? (
                   <img
@@ -93,13 +114,12 @@ export default function SearchResults() {
                 )}
                 <div className="p-4">
                   <h3 className="font-semibold">{place.title}</h3>
-                  <p className="text-gray-600">{place.address}</p>
+                  <p className="text-gray-600">{place.address || "-"}</p>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* 홈으로 돌아가기 */}
           <div className="mt-6">
             <Link to="/" className="text-indigo-600 hover:underline">
               ← 홈으로 돌아가기

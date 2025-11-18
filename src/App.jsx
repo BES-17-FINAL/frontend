@@ -27,8 +27,8 @@ const App = () => {
         {/* 홈 */}
         <Route path="/" element={<TravelHubHome />} />
 
-        {/* 관광지 상세 페이지 */}
-        <Route path="/spotDetail" element={<SpotDetail />} />
+        {/* 관광지 상세 페이지로 이동 */}
+        <Route path="/spot/:id" element={<SpotDetail />} />
 
         {/* 로그인 / 회원가입 */}
         <Route
@@ -45,9 +45,6 @@ const App = () => {
 
         {/* 검색 결과 */}
         <Route path="/search" element={<SearchResults />} />
-        
-        {/* 관광지 상세 페이지로 이동 */}
-        <Route path="/spot/:id/:type" element={<SpotDetail />} />
 
         {/* 지역 기반 관광 리스트 페이지 */}
         <Route path="/explore" element={<AreaBasedListPage />} />
