@@ -5,6 +5,7 @@ import Signup from "./pages/signup";
 import Login from "./pages/login";
 import useAuthStore from "./store/authStore";
 import SpotDetail from "./pages/spotDetail";
+import OAuthCallback from "./pages/OAuthCallback";
 import { Navigate } from "react-router-dom";
 
 const App = () => {
@@ -32,7 +33,8 @@ const App = () => {
           path="/signup"
           element={isAuthenticated ? <Navigate to="/" /> : <Signup />}
         />
-
+        <Route path="/oauth/callback" element={<OAuthCallback />} />
+        
       </Routes>
     </BrowserRouter>
   );
