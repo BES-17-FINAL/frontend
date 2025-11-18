@@ -2,9 +2,11 @@ import React, { useEffect, useState } from "react";
 import useSpotStore from "../store/spotStore";
 import { Star, MapPin, Clock, Phone, Globe } from 'lucide-react';
 import { useLocation, useNavigate } from "react-router-dom";
-
+import useReviewStore from "../store/reviewStore";
+import { ReviewWriteModal } from "../components/review/ReviewWriteModal";
 const SpotDetail = () => { // 임시값 추가
     const { getSpot, loading, error } = useSpotStore();
+    const { getAverageRating, getReviews, addReview} = useReviewStore();
 
     const [spot, setSpot] = useState([]);
     const [rating, setRating] = useState(0);
@@ -20,17 +22,34 @@ const SpotDetail = () => { // 임시값 추가
       const fetchSpot = async () => {
         console.log("spotId: ", spotId);
         const data = await getSpot(spotId);
-        console.log("data: ", data)
         setSpot(data);
       };
       fetchSpot();
     }, [getSpot]);
+
+     useEffect(() => {
+      const fetchSpot = async () => {
+        const rating = await getAverageRating(spotId);
+        setRating(rating);
+      };
+      fetchSpot();
+    }, [getAverageRating]);
+
+    useEffect(() => {
+      const fetchSpot = async () => {
+        const reviews = await getReviews(spotId);
+        setReviews(reviews);
+      };
+      fetchSpot();
+    }, [getReviews]);
+
 
   const handleBack = () => {
     navigate(-1); // 브라우저 히스토리에서 한 단계 뒤로
   };
 
   const handleSubmit = async ( data ) =>  {
+    console.log(data)
     await addReview(spotId, data);
     setIsReview(false);
     window.location.reload();
