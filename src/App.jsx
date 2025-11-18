@@ -28,7 +28,7 @@ const App = () => {
         <Route path="/" element={<TravelHubHome />} />
 
         {/* 관광지 상세 페이지로 이동 */}
-        <Route path="/spot/:id" element={<SpotDetail />} />
+        <Route path="/spotDetail" element={<SpotDetail />} />
 
         {/* 로그인 / 회원가입 */}
         <Route

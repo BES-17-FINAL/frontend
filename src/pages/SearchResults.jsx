@@ -56,6 +56,25 @@ export default function SearchResults() {
     fetchPlaces();
   }, [keyword, contentTypeId]);
 
+  const handleGetSpotId = async (contentId) => {
+          const url = `http://localhost:8080/api/search/${contentId}`
+          const res = await fetch(url, {
+          method: "GET",
+          // credentials: "omit",  // 기본값 omit → 쿠키 포함 안 함
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+
+        const data = await res.json();
+        console.log("handleGetSPotId: ", data);
+        return data.id;
+  }
+  
   const handleSearch = (keyword) => {
     if (!keyword.trim()) return;
     navigate(
@@ -89,16 +108,15 @@ export default function SearchResults() {
               <div
                 key={place.id} // 🔑 key를 title에서 id로 변경
                 className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition"
-                onClick={() => {
+                onClick={async() => {
                   const contentId = Number(place.id);
                   const contentTypeId = Number(place.apiType);
-
                   if (!contentId || !contentTypeId) {
                     alert("잘못된 관광지 정보입니다.");
                     return;
                   }
-
-                  navigate(`/spot/${contentId}?contentTypeId=${contentTypeId}`);
+                  const spotId = await handleGetSpotId(contentId);
+                  navigate(`/spotDetail?spotId=${spotId}`);
                 }}
               >
                 {place.firstImage ? (
