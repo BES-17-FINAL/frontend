@@ -9,6 +9,7 @@ export function UserProfile() {
   const { getUser, editUser } = useUserStore();
   const { getUserPost } = usePostStore();
   const { getMyReviews } = useReviewStore();
+
   const [profile, setProfile] = useState([]);
 
   const [activeTab, setActiveTab] = useState('reviews'); // reviews, posts, comments
@@ -54,6 +55,7 @@ export function UserProfile() {
             const data = await getUser();
             const postData = await getUserPost();
             const reviewData = await getMyReviews();
+            console.log("posts: ", postData)
             setProfile(data);
             setPosts(postData);
             setReviews(reviewData);
@@ -260,7 +262,7 @@ export function UserProfile() {
               : 'text-[#666] hover:text-black'
           }`}
         >
-          작성한 리뷰 ({user.stats.reviews})
+          작성한 리뷰 ({reviews?.length || "0"})
         </button>
         <button
           onClick={() => setActiveTab('posts')}
@@ -270,7 +272,7 @@ export function UserProfile() {
               : 'text-[#666] hover:text-black'
           }`}
         >
-          작성한 게시글 ({user.stats.posts})
+          작성한 게시글 ({posts?.length || "0"})
         </button>
         <button
           onClick={() => setActiveTab('comments')}
@@ -280,7 +282,7 @@ export function UserProfile() {
               : 'text-[#666] hover:text-black'
           }`}
         >
-          작성한 댓글 ({user.stats.comments})
+          작성한 댓글 ({user.stats.comments || "0"})
         </button>
       </div>
 
@@ -289,7 +291,7 @@ export function UserProfile() {
         {/* 리뷰 탭 */}
         {activeTab === 'reviews' && (
           <>
-            {reviews.map((review) => (
+            {reviews?.map((review) => (
               <div
                 key={review.id}
                 className="bg-white border-2 border-[#dedede] rounded-lg p-6 hover:border-[#4442dd] hover:shadow-md transition-all cursor-pointer"
@@ -322,7 +324,7 @@ export function UserProfile() {
         {/* 게시글 탭 */}
         {activeTab === 'posts' && (
           <>
-            {userPosts.map((post) => (
+            {posts?.map((post) => (
               <div
                 key={post.id}
                 className="bg-white border-2 border-[#dedede] rounded-lg p-6 hover:border-[#4442dd] hover:shadow-md transition-all cursor-pointer"
@@ -331,7 +333,7 @@ export function UserProfile() {
                   <span className={`px-2 py-1 rounded text-[12px] ${getCategoryColor(post.category)}`}>
                     {post.category}
                   </span>
-                  <span className="text-[14px] text-[#666]">{post.date}</span>
+                  <span className="text-[14px] text-[#666]">{post.createdAt}</span>
                 </div>
                 <h3 className="text-[18px] text-black mb-2">{post.title}</h3>
                 <p className="text-[16px] text-[#333] mb-3 line-clamp-2">{post.content}</p>
