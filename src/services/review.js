@@ -8,7 +8,7 @@ const reviewService = {
         return api.get(`/api/spots/${spotId}/reviews`)
     },
     getAverageRating(spotId) {
-        return api.get(`/api/spots/${spotId}/{spotId}/rating`)
+        return api.get(`/api/spots/${spotId}/rating`)
     },
     getMyReviews() {
         return api.get("/api/spots/reviews/my")

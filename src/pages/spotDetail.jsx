@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import useSpotStore from "../store/spotStore";
 import { Star, MapPin, Clock, Phone, Globe } from 'lucide-react';
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import useReviewStore from "../store/reviewStore";
+import { ReviewWriteModal } from "../components/review/ReviewWriteModal";
 import Header from "../components/layout/Header";
 
 const SpotDetail = () => { // 임시값 추가
@@ -17,6 +18,7 @@ const SpotDetail = () => { // 임시값 추가
     const [comment, setComment] = useState("")
 
     const location = useLocation();
+    const navigate = useNavigate();
     const queryParams = new URLSearchParams(location.search);
     const spotId = queryParams.get("spotId");
 
@@ -53,6 +55,17 @@ const SpotDetail = () => { // 임시값 추가
         minute: "2-digit"
       });
     };
+  
+  const handleBack = () => {
+    navigate(-1); // 브라우저 히스토리에서 한 단계 뒤로
+  };
+
+  const handleSubmit = async ( data ) =>  {
+    console.log(data)
+    await addReview(spotId, data);
+    setIsReview(false);
+    window.location.reload();
+  }
 
     const handleComment = (e) => {
       setComment(e.target.value);
@@ -60,8 +73,7 @@ const SpotDetail = () => { // 임시값 추가
   return (
     <div className="bg-white min-h-screen">
       <Header />
-
-
+    
       <div className="max-w-[1200px] mx-auto px-8 py-12">
         <div className="mb-12">
           <div className="mb-6">
@@ -235,7 +247,11 @@ const SpotDetail = () => { // 임시값 추가
                     </p>
                   </div>
                 </div>
-              ))}
+                <p className="text-[16px] text-[#333] leading-relaxed">
+                  {review.comment}
+                </p>
+              </div>
+            ))}
              </div>
         </div>
       </div>
