@@ -19,6 +19,7 @@ export function PostWriteModal({ onClose, onPostCreated, mode = 'create', initia
     content: '',
     images: []
   });
+  const [thumbnailIndex, setThumbnailIndex] = useState(0); // 썸네일 인덱스 (기본값: 첫 번째 이미지)
   const [loading, setLoading] = useState(false);
 
   // 수정 모드일 때 초기 데이터 설정
@@ -30,6 +31,16 @@ export function PostWriteModal({ onClose, onPostCreated, mode = 'create', initia
         content: initialPost.fullContent || initialPost.content || '',
         images: [] // 기존 이미지는 서버에 있으므로 빈 배열로 시작
       });
+      // 기존 이미지 중 썸네일 인덱스 찾기
+      if (initialPost.images && initialPost.images.length > 0) {
+        const thumbnailIndex = initialPost.images.findIndex(img => img.isThumbnail || img.thumbnail);
+        setThumbnailIndex(thumbnailIndex >= 0 ? thumbnailIndex : 0);
+      } else {
+        setThumbnailIndex(0);
+      }
+    } else if (mode === 'create') {
+      // 작성 모드로 전환 시 초기화
+      setThumbnailIndex(0);
     }
   }, [mode, initialPost]);
 
@@ -49,6 +60,39 @@ export function PostWriteModal({ onClose, onPostCreated, mode = 'create', initia
       ...prev,
       images: files
     }));
+    // 새 이미지가 추가되면 첫 번째 이미지를 썸네일로 설정
+    if (files.length > 0) {
+      setThumbnailIndex(0);
+    }
+  };
+
+  // 썸네일 변경 핸들러
+  const handleThumbnailChange = (index) => {
+    setThumbnailIndex(index);
+  };
+
+  // 이미지 제거 핸들러
+  const handleRemoveImage = (index) => {
+    const fileToRemove = formData.images[index];
+    // URL 해제 (메모리 누수 방지)
+    if (fileToRemove) {
+      const url = URL.createObjectURL(fileToRemove);
+      URL.revokeObjectURL(url);
+    }
+    
+    const newImages = formData.images.filter((_, i) => i !== index);
+    setFormData(prev => ({
+      ...prev,
+      images: newImages
+    }));
+    // 제거된 이미지가 썸네일이었거나 그 이전이면 썸네일 인덱스 조정
+    if (index <= thumbnailIndex) {
+      setThumbnailIndex(Math.max(0, thumbnailIndex - 1));
+    }
+    // 모든 이미지가 제거되면 썸네일 인덱스 초기화
+    if (newImages.length === 0) {
+      setThumbnailIndex(0);
+    }
   };
 
   // 카테고리 한글 → Enum 변환
@@ -86,7 +130,7 @@ export function PostWriteModal({ onClose, onPostCreated, mode = 'create', initia
         title: formData.title,
         content: formData.content,
         category: categoryToEnum(formData.category),
-        thumbnailIndex: formData.images.length > 0 ? 0 : null // 첫 번째 이미지를 썸네일로
+        thumbnailIndex: formData.images.length > 0 ? thumbnailIndex : null // 사용자가 선택한 썸네일 인덱스
       };
       
       formDataToSend.append('post', new Blob([JSON.stringify(postRequest)], {
@@ -227,6 +271,47 @@ export function PostWriteModal({ onClose, onPostCreated, mode = 'create', initia
                   <p className="text-[#4442dd] mt-2">{formData.images.length}개의 이미지 선택됨</p>
                 )}
               </label>
+              {/* 이미지 미리보기 */}
+              {formData.images.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-sm text-[#666] mb-2">이미지를 클릭하여 썸네일로 설정하세요</p>
+                  <div className="grid grid-cols-3 gap-4">
+                    {formData.images.map((file, index) => (
+                      <div 
+                        key={index} 
+                        className={`relative cursor-pointer transition-all ${
+                          index === thumbnailIndex ? 'ring-4 ring-[#4442dd] ring-offset-2' : ''
+                        }`}
+                        onClick={() => handleThumbnailChange(index)}
+                      >
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt={`미리보기 ${index + 1}`}
+                          className={`w-full h-24 object-cover rounded-lg border-2 ${
+                            index === thumbnailIndex ? 'border-[#4442dd]' : 'border-[#dedede]'
+                          }`}
+                        />
+                        {index === thumbnailIndex && (
+                          <span className="absolute top-1 left-1 bg-[#4442dd] text-white text-xs px-2 py-1 rounded font-bold">
+                            썸네일
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation(); // 클릭 이벤트 전파 방지
+                            handleRemoveImage(index);
+                          }}
+                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
+                          title="이미지 제거"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

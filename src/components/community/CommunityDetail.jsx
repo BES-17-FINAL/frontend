@@ -3,7 +3,7 @@ import { Bookmark, Image as ImageIcon, Edit2, Trash2 } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
 import useAuthStore from '../../store/authStore';
 import { PostWriteModal } from './PostWriteModal';
-import api from '../../services/api';
+import api, { getImageUrl } from '../../services/api';
 
 export function CommunityDetail({ post, onBack, onPostUpdated }) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -368,13 +368,18 @@ export function CommunityDetail({ post, onBack, onPostUpdated }) {
 
         {/* 이미지 */}
         {postData.images && postData.images.length > 0 && (
-          <div className="mb-6 grid grid-cols-2 gap-4">
+          <div className="mb-6 space-y-4">
             {postData.images.map((img, idx) => (
               <img
                 key={idx}
-                src={img}
+                src={getImageUrl(img)}
                 alt={`게시글 이미지 ${idx + 1}`}
-                className="w-full h-[200px] object-cover rounded-lg"
+                className="w-full rounded-lg"
+                style={{ maxHeight: '600px', objectFit: 'contain' }}
+                onError={(e) => {
+                  console.error('이미지 로드 실패:', img);
+                  e.target.style.display = 'none';
+                }}
               />
             ))}
           </div>
