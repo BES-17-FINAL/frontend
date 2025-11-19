@@ -1,6 +1,6 @@
 import { Heart } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
-import api, { getImageUrl } from '../../services/api';
+import api from '../../services/api';
 
 const CommunityList = ({ onPostClick, onWriteClick, refreshTrigger }) => {
 
@@ -315,7 +315,7 @@ const CommunityList = ({ onPostClick, onWriteClick, refreshTrigger }) => {
               {post.thumbnailUrl && (
                 <div className="flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden">
                   <img
-                    src={getImageUrl(post.thumbnailUrl)}
+                    src={post.thumbnailUrl}
                     alt="게시글 썸네일"
                     className="w-full h-full object-cover"
                     onError={(e) => {

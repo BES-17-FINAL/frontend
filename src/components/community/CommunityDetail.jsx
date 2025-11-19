@@ -3,7 +3,7 @@ import { Bookmark, Image as ImageIcon, Edit2, Trash2 } from 'lucide-react';
 import { useMemo, useState, useEffect, useRef } from 'react';
 import useAuthStore from '../../store/authStore';
 import { PostWriteModal } from './PostWriteModal';
-import api, { getImageUrl } from '../../services/api';
+import api from '../../services/api';
 
 export function CommunityDetail({ post, onBack, onPostUpdated }) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -665,7 +665,7 @@ export function CommunityDetail({ post, onBack, onPostUpdated }) {
             {displayPostData.images.map((img, idx) => (
               <img
                 key={idx}
-                src={getImageUrl(img)}
+                src={img}
                 alt={`게시글 이미지 ${idx + 1}`}
                 className="w-full rounded-lg"
                 style={{ maxHeight: '600px', objectFit: 'contain' }}
