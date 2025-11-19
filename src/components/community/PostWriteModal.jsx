@@ -1,6 +1,6 @@
 import { X, Image as ImageIcon } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import api, { getImageUrl } from '../../services/api';
+import api from '../../services/api';
 
 export function PostWriteModal({ onClose, onPostCreated, mode = 'create', initialPost = null }) {
   // 카테고리 Enum → 한글 변환
@@ -462,7 +462,7 @@ export function PostWriteModal({ onClose, onPostCreated, mode = 'create', initia
                           onClick={() => handleThumbnailChange(globalIndex)}
                         >
                           <img
-                            src={getImageUrl(imageUrl)}
+                            src={imageUrl}
                             alt={`기존 이미지 ${index + 1}`}
                             className={`w-full h-24 object-cover rounded-lg border-2 ${
                               globalIndex === thumbnailIndex ? 'border-[#4442dd]' : 'border-[#dedede]'
