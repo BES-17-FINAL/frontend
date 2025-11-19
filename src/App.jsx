@@ -10,6 +10,7 @@ import SpotDetail from "./pages/spotDetail";
 import OAuthCallback from "./pages/OAuthCallback";
 import Community from "./pages/community";
 import AreaBasedListPage from "./pages/area_based_list_page";
+import { UserProfile } from "./pages/profile"
 import FestivalListPage from "./pages/FestivalListPage";
 
 // 상태 관리
@@ -60,7 +61,7 @@ const App = () => {
         {/* 존재하지 않는 경로 처리 */}
         <Route path="*" element={<Navigate to="/" />} />
 
-
+        <Route path="/profile" element={isAuthenticated ?<UserProfile /> : <Navigate to="login" />} />
       </Routes>
     </BrowserRouter>
   );
