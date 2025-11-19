@@ -20,6 +20,7 @@ const SpotDetail = () => { // 임시값 추가
 
     useEffect(() => {
       const fetchSpot = async () => {
+        console.log("spotId: ", spotId);
         const data = await getSpot(spotId);
         setSpot(data);
       };
@@ -78,7 +79,7 @@ const SpotDetail = () => { // 임시값 추가
       <div className="max-w-[1200px] mx-auto px-8 py-12">
         <div className="mb-12">
           <div className="mb-6">
-            <h2 className="text-[36px] text-black mb-3">{spot.title}</h2>
+            <h2 className="text-[36px] text-black mb-3">{spot?.title}</h2>
             <div className="flex items-center gap-2">
                 {[...Array(5)].map((_, i) => (
                 <Star key={i} className={`w-6 h-6 ${
@@ -95,7 +96,7 @@ const SpotDetail = () => { // 임시값 추가
          <div className="grid grid-cols-3 gap-6 mb-8">
             <div className="col-span-2 h-[400px] rounded-lg overflow-hidden shadow-md">
                 <img
-                    src={spot.firstImage}
+                    src={spot?.firstImage}
                     alt="Spot Image"
                     className="w-full h-full object-cover"
                 />
@@ -106,40 +107,40 @@ const SpotDetail = () => { // 임시값 추가
                     <div className="flex items-start gap-3">
                         <MapPin className="w-5 h-5 text-[#4442dd] mt-1 flex-shrink-0" />
                         <div>
-                            <p className="text-[14px] text-[#666] mb-1">{!spot.address ? "위치 정보 없음" : "위치"}</p>
-                            <p className="text-[16px] text-black">{spot.address}</p>
+                            <p className="text-[14px] text-[#666] mb-1">{!spot?.address ? "위치 정보 없음" : "위치"}</p>
+                            <p className="text-[16px] text-black">{spot?.address}</p>
                         </div>
                     </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <Clock className="w-5 h-5 text-[#4442dd] mt-1 flex-shrink-0" />
                   <div>
-                    <p className="text-[14px] text-[#666] mb-1">{!spot.tel ? "운영시간 정보 없음" : "운영시간"}</p>
-                    <p className="text-[16px] text-black">{spot.tel}</p>
+                    <p className="text-[14px] text-[#666] mb-1">{!spot?.tel ? "운영시간 정보 없음" : "운영시간"}</p>
+                    <p className="text-[16px] text-black">{spot?.tel}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <Phone className="w-5 h-5 text-[#4442dd] mt-1 flex-shrink-0" />
                   <div>
-                    <p className="text-[14px] text-[#666] mb-1">{!spot.tel ? "전화번호 정보 없음" : "전화 번호"}</p>
-                    <p className="text-[16px] text-black">{spot.tel}</p>
+                    <p className="text-[14px] text-[#666] mb-1">{!spot?.tel ? "전화번호 정보 없음" : "전화 번호"}</p>
+                    <p className="text-[16px] text-black">{spot?.tel}</p>
                   </div>
                 </div>
                   <div className="flex items-start gap-3 min-w-0">
                     <Globe className="w-5 h-5 text-[#4442dd] mt-1 flex-shrink-0" />
                     <div className="min-w-0">
                       <p className="text-[14px] text-[#666] mb-1">
-                        {!spot.homepage ? "웹사이트 정보 없음" : "웹사이트"}
+                        {!spot?.homepage ? "웹사이트 정보 없음" : "웹사이트"}
                       </p>
 
-                      {spot.homepage ? (
+                      {spot?.homepage ? (
                         <a
-                          href={spot.homepage}
+                          href={spot?.homepage}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-[16px] text-[#4442dd] break-all underline hover:text-blue-700 block"
                         >
-                          {spot.homepage}
+                          {spot?.homepage}
                         </a>
                       ) : (
                         <p className="text-[16px] text-gray-500">홈페이지 정보 없음</p>
@@ -151,7 +152,7 @@ const SpotDetail = () => { // 임시값 추가
             <div className="border-l-4 border-[#4442dd] pl-6 py-2">
                 <h3 className="text-[20px] text-black mb-3">개요</h3>
                 <p className="text-[16px] text-[#333] leading-relaxed">
-                  {spot.description}
+                  {spot?.description}
                 </p>
           </div>
         <div>
