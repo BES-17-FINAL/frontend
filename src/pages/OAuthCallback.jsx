@@ -1,41 +1,38 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import useAuthStore from "../store/authStore";
-import { authService } from "../services/auth";
-import StorageService from "../services/storage";
 
 const OAuthCallback = () => {
+  const [params] = useSearchParams();
   const navigate = useNavigate();
-  const setAuth = useAuthStore((state) => state.setAuth);
+  const oauthLogin = useAuthStore((state) => state.oauthLogin);
 
   useEffect(() => {
-    const token = new URLSearchParams(window.location.search).get("token");
+    const token = params.get("token");
 
     if (!token) {
-      navigate("/login", { replace: true });
+      console.error("토큰 없음");
+      navigate("/login");
       return;
     }
 
-    StorageService.setAccessToken(token);
-    authService.fetchUserWithToken(token)
-      .then((user) => {
-        setAuth({
-          token,
-          user,
-          isAuthenticated: true,
-          loading: false,
-        });
-
-        navigate("/", { replace: true }); // 메인 페이지로 이동
+    // Zustand OAuth 로그인 처리
+    oauthLogin(token)
+      .then(() => {
+        navigate("/"); // 로그인 완료 후 메인으로 이동
       })
-      .catch(() => {
-        setAuth({ token: null, user: null, isAuthenticated: false, loading: false });
-        StorageService.clear();
-        navigate("/login", { replace: true });
+      .catch((err) => {
+        console.error("OAuth 로그인 중 오류 발생:", err);
+        navigate("/login");
       });
-  }, [navigate, setAuth]);
 
-  return <div>로그인 처리 중...</div>;
+  }, [params, oauthLogin, navigate]);
+
+  return (
+    <div style={{ textAlign: "center", marginTop: "50px" }}>
+      OAuth 로그인 처리 중...
+    </div>
+  );
 };
 
 export default OAuthCallback;

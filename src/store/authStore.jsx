@@ -7,16 +7,18 @@ const useAuthStore = create((set) => ({
   loading: false,
   error: null,
 
-  
+  // -------------------- LOCAL 로그인 --------------------
   login: async (userData) => {
     set({ loading: true, error: null });
     try {
       const data = await authService.login(userData);
+
       set({
         user: data.user,
         isAuthenticated: true,
         loading: false,
       });
+
       return data;
     } catch (err) {
       set({
@@ -27,16 +29,17 @@ const useAuthStore = create((set) => ({
     }
   },
 
-
+  // -------------------- LOCAL 회원가입 --------------------
   register: async (userData) => {
     set({ loading: true, error: null });
     try {
       const data = await authService.register(userData);
+
       set({
-        user: data.user,
-        isAuthenticated: false,// 회원가입 후 바로 인증 상태로 변경하지 않음
+        isAuthenticated: false, // 가입 후 자동 로그인 ❌
         loading: false,
       });
+
       return data;
     } catch (err) {
       set({
@@ -45,6 +48,17 @@ const useAuthStore = create((set) => ({
       });
       throw err;
     }
+  },
+
+  // -------------------- OAuth 로그인 (토큰 저장) --------------------
+  oauthLogin: async (token) => {
+    const data = await authService.oauthLogin(token);
+
+    set({
+      user: data.user,
+      isAuthenticated: true,
+      loading: false,
+    });
   },
 
   logout: () => {
