@@ -6,11 +6,20 @@ import { MapPin } from "lucide-react";
 import SpotList from "../components/spot/spotList";
 import useSpotStore from "../store/spotStore";
 import Header from "../components/layout/Header"; // 새로 분리한 Header 컴포넌트
+import FestivalList from "../components/festival/festivalList";
+import useFestivalStore from "../store/festivalStore";
 
 export default function TravelHubHome() {
   const navigate = useNavigate();
   const { getFameSpots } = useSpotStore();
   const [spots, setSpots] = useState([]);
+
+  const {
+    festivals,
+    loading: festivalLoading,
+    error: festivalError,
+    getOngoingFestivals,
+  } = useFestivalStore();
 
   useEffect(() => {
     const fetchSpots = async () => {
@@ -19,6 +28,10 @@ export default function TravelHubHome() {
     };
     fetchSpots();
   }, [getFameSpots]);
+
+  useEffect(() => {
+    getOngoingFestivals();
+  }, [getOngoingFestivals]);
 
   // 검색 시 SearchResults 페이지로 이동
   const handleSearch = (keyword) => {
@@ -35,9 +48,12 @@ export default function TravelHubHome() {
       <main className="max-w-6xl mx-auto px-6">
         <section className="rounded-2xl p-8 bg-white shadow-md md:flex md:items-center md:gap-8">
           <div className="flex-1">
-            <h2 className="text-3xl md:text-4xl font-extrabold mb-3">가고 싶은 곳, 바로 찾기</h2>
+            <h2 className="text-3xl md:text-4xl font-extrabold mb-3">
+              가고 싶은 곳, 바로 찾기
+            </h2>
             <p className="text-gray-600 mb-6">
-              지역별 관광지, 추천 루트, 이용 팁까지 — Travel Hub에서 여행 계획을 더 간편하게 세워보세요.
+              지역별 관광지, 추천 루트, 이용 팁까지 — Travel Hub에서 여행 계획을
+              더 간편하게 세워보세요.
             </p>
 
             {/* Hero 버튼들 */}
@@ -70,10 +86,18 @@ export default function TravelHubHome() {
             <div className="rounded-xl bg-gradient-to-tr from-indigo-50 to-sky-50 p-4 h-full flex flex-col justify-center">
               <h3 className="font-semibold">오늘의 추천 지역</h3>
               <ul className="mt-3 grid grid-cols-2 gap-2">
-                <li className="p-3 bg-white rounded-lg shadow-sm">서울 — 북촌 한옥마을</li>
-                <li className="p-3 bg-white rounded-lg shadow-sm">부산 — 해운대</li>
-                <li className="p-3 bg-white rounded-lg shadow-sm">제주 — 성산 일출봉</li>
-                <li className="p-3 bg-white rounded-lg shadow-sm">강릉 — 주문진</li>
+                <li className="p-3 bg-white rounded-lg shadow-sm">
+                  서울 — 북촌 한옥마을
+                </li>
+                <li className="p-3 bg-white rounded-lg shadow-sm">
+                  부산 — 해운대
+                </li>
+                <li className="p-3 bg-white rounded-lg shadow-sm">
+                  제주 — 성산 일출봉
+                </li>
+                <li className="p-3 bg-white rounded-lg shadow-sm">
+                  강릉 — 주문진
+                </li>
               </ul>
             </div>
           </div>
@@ -83,6 +107,13 @@ export default function TravelHubHome() {
         <section className="mt-8">
           <h3 className="text-xl font-semibold mb-4">인기 지역 둘러보기</h3>
           <SpotList spotList={spots} />
+
+          <h3 className="text-xl font-semibold mb-4">진행 중인 축제</h3>
+          <FestivalList
+            festivals={festivals}
+            loading={festivalLoading}
+            error={festivalError}
+          />
 
           <h3 className="text-xl font-semibold mb-4">지역별 탐색</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -94,7 +125,10 @@ export default function TravelHubHome() {
               { name: "경주", desc: "역사 유적 탐방" },
               { name: "전주", desc: "한옥과 전통음식" },
             ].map((region) => (
-              <article key={region.name} className="bg-white rounded-xl p-5 shadow hover:shadow-md transition">
+              <article
+                key={region.name}
+                className="bg-white rounded-xl p-5 shadow hover:shadow-md transition"
+              >
                 <div className="flex items-start gap-3">
                   <div className="w-12 h-12 rounded-lg bg-sky-100 flex items-center justify-center font-semibold">
                     {region.name[0]}
@@ -105,10 +139,15 @@ export default function TravelHubHome() {
                   </div>
                 </div>
                 <div className="mt-4 flex items-center justify-between">
-                  <Link to={`/region/${region.name}`} className="text-sm text-indigo-600">
+                  <Link
+                    to={`/region/${region.name}`}
+                    className="text-sm text-indigo-600"
+                  >
                     자세히 보기 →
                   </Link>
-                  <button className="text-sm px-3 py-1 border rounded">즐겨찾기</button>
+                  <button className="text-sm px-3 py-1 border rounded">
+                    즐겨찾기
+                  </button>
                 </div>
               </article>
             ))}

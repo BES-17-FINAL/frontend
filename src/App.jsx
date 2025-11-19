@@ -6,6 +6,10 @@ import Signup from "./pages/signup";
 import Login from "./pages/login";
 import SpotDetail from "./pages/spotDetail";
 import OAuthCallback from "./pages/OAuthCallback";
+import Community from "./pages/community";
+import AreaBasedListPage from "./pages/area_based_list_page";
+import { UserProfile } from "./pages/profile"
+import FestivalListPage from "./pages/FestivalListPage";
 
 import useAuthStore from "./store/authStore";
 
@@ -39,6 +43,7 @@ const App = () => {
         {/* OAuth 콜백 */}
         <Route path="/oauth/callback" element={<OAuthCallback />} />
 
+        <Route path="/profile" element={isAuthenticated ?<UserProfile /> : <Navigate to="login" />} />
       </Routes>
     </BrowserRouter>
   );
