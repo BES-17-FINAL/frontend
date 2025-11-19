@@ -9,6 +9,8 @@ export const authService = {
     });
 
     const user = response.data;
+  },
+  
   async login(userData) {
     const response = await api.post("/auth/login", userData);
     const { token, nickname, email, user } = response.data;
