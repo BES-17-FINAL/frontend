@@ -36,10 +36,14 @@ export function CommunityDetail({ post, onBack, onPostUpdated }) {
   const [likeCount, setLikeCount] = useState(post.likes || 0);
   const [viewCount, setViewCount] = useState(post.views || 0);
 
-  // 댓글 좋아요 상태 관리 (댓글 ID를 키로 사용)
-  const [commentLikes, setCommentLikes] = useState({});
-  // 답글 좋아요 상태 관리 (답글 ID를 키로 사용)
-  const [replyLikes, setReplyLikes] = useState({});
+  // 댓글 상태 관리
+  const [comments, setComments] = useState([]);
+  const [newComment, setNewComment] = useState('');
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editingCommentText, setEditingCommentText] = useState('');
+  const [replyingToCommentId, setReplyingToCommentId] = useState(null);
+  const [replyText, setReplyText] = useState('');
+  const [loadingComments, setLoadingComments] = useState(false);
 
   // 현재 사용자 정보 가져오기
   const { isAuthenticated, user } = useAuthStore();
@@ -229,27 +233,195 @@ export function CommunityDetail({ post, onBack, onPostUpdated }) {
     }
   };
 
-  // 댓글 좋아요 토글 함수
-  const handleCommentLike = (commentId) => {
-    setCommentLikes(prev => {
-      const isLiked = prev[commentId] || false;
-      return {
-        ...prev,
-        [commentId]: !isLiked
-      };
-    });
+  // 댓글 목록 조회
+  const fetchComments = async () => {
+    if (!post?.id) return;
+    
+    try {
+      setLoadingComments(true);
+      const response = await api.get(`/api/posts/${post.id}/comments`, {
+        params: {
+          page: 0,
+          size: 100,
+          sort: 'createdAt,asc'
+        }
+      });
+      
+      // 백엔드에서 받은 댓글 데이터를 프론트엔드 형식으로 변환
+      const commentsData = response.data.content || response.data || [];
+      const transformedComments = commentsData.map(comment => ({
+        id: comment.id,
+        authorName: comment.nickname || '익명',
+        authorNickname: comment.nickname || '익명',
+        content: comment.text || '',
+        likes: comment.likeCount || 0,
+        isLiked: comment.isLiked || false,
+        createdAt: comment.createdAt,
+        userId: comment.userId,
+        replies: (comment.replies || []).map(reply => ({
+          id: reply.id,
+          authorName: reply.nickname || '익명',
+          authorNickname: reply.nickname || '익명',
+          content: reply.text || '',
+          likes: reply.likeCount || 0,
+          isLiked: reply.isLiked || false,
+          createdAt: reply.createdAt,
+          userId: reply.userId
+        }))
+      }));
+      
+      setComments(transformedComments);
+    } catch (error) {
+      console.error('댓글 목록 조회 실패:', error);
+      setComments([]);
+    } finally {
+      setLoadingComments(false);
+    }
   };
 
-  // 답글 좋아요 토글 함수
-  const handleReplyLike = (replyId) => {
-    setReplyLikes(prev => {
-      const isLiked = prev[replyId] || false;
-      return {
-        ...prev,
-        [replyId]: !isLiked
-      };
-    });
+  // 댓글 작성
+  const handleCommentSubmit = async () => {
+    if (!post?.id || !newComment.trim()) {
+      alert('댓글을 입력해주세요.');
+      return;
+    }
+    
+    if (!isAuthenticated) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+    
+    try {
+      await api.post(`/api/posts/${post.id}/comments`, {
+        text: newComment.trim(),
+        parentId: null
+      });
+      
+      setNewComment('');
+      await fetchComments(); // 댓글 목록 새로고침
+    } catch (error) {
+      console.error('댓글 작성 실패:', error);
+      alert('댓글 작성에 실패했습니다.');
+    }
   };
+
+  // 답글 작성
+  const handleReplySubmit = async (parentCommentId) => {
+    if (!post?.id || !replyText.trim()) {
+      alert('답글을 입력해주세요.');
+      return;
+    }
+    
+    if (!isAuthenticated) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+    
+    try {
+      await api.post(`/api/posts/${post.id}/comments`, {
+        text: replyText.trim(),
+        parentId: parentCommentId
+      });
+      
+      setReplyText('');
+      setReplyingToCommentId(null);
+      await fetchComments(); // 댓글 목록 새로고침
+    } catch (error) {
+      console.error('답글 작성 실패:', error);
+      alert('답글 작성에 실패했습니다.');
+    }
+  };
+
+  // 댓글 수정
+  const handleCommentEdit = (commentId) => {
+    const comment = comments.find(c => c.id === commentId) || 
+                   comments.flatMap(c => c.replies || []).find(r => r.id === commentId);
+    
+    if (comment) {
+      setEditingCommentId(commentId);
+      setEditingCommentText(comment.content);
+    }
+  };
+
+  // 댓글 수정 완료
+  const handleCommentUpdate = async () => {
+    if (!post?.id || !editingCommentId || !editingCommentText.trim()) {
+      return;
+    }
+    
+    try {
+      await api.put(`/api/posts/${post.id}/comments/${editingCommentId}`, {
+        text: editingCommentText.trim()
+      });
+      
+      setEditingCommentId(null);
+      setEditingCommentText('');
+      await fetchComments(); // 댓글 목록 새로고침
+    } catch (error) {
+      console.error('댓글 수정 실패:', error);
+      alert('댓글 수정에 실패했습니다.');
+    }
+  };
+
+  // 댓글 삭제
+  const handleCommentDelete = async (commentId) => {
+    if (!window.confirm('정말 이 댓글을 삭제하시겠습니까?')) {
+      return;
+    }
+    
+    if (!post?.id) return;
+    
+    try {
+      await api.delete(`/api/posts/${post.id}/comments/${commentId}`);
+      await fetchComments(); // 댓글 목록 새로고침
+    } catch (error) {
+      console.error('댓글 삭제 실패:', error);
+      alert('댓글 삭제에 실패했습니다.');
+    }
+  };
+
+  // 댓글 좋아요 토글
+  const handleCommentLike = async (commentId) => {
+    if (!post?.id) return;
+    
+    if (!isAuthenticated) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+    
+    try {
+      await api.post(`/api/posts/${post.id}/comments/${commentId}/like`);
+      await fetchComments(); // 댓글 목록 새로고침
+    } catch (error) {
+      console.error('댓글 좋아요 실패:', error);
+      alert('좋아요 처리에 실패했습니다.');
+    }
+  };
+
+  // 답글 좋아요 토글
+  const handleReplyLike = async (replyId) => {
+    if (!post?.id) return;
+    
+    if (!isAuthenticated) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+    
+    try {
+      await api.post(`/api/posts/${post.id}/comments/${replyId}/like`);
+      await fetchComments(); // 댓글 목록 새로고침
+    } catch (error) {
+      console.error('답글 좋아요 실패:', error);
+      alert('좋아요 처리에 실패했습니다.');
+    }
+  };
+
+  // 댓글 목록 조회 (게시글 로드 시)
+  useEffect(() => {
+    if (post?.id) {
+      fetchComments();
+    }
+  }, [post?.id]);
 
   // 날짜 포맷팅 함수
   const formatDate = (dateString) => {
@@ -330,36 +502,14 @@ export function CommunityDetail({ post, onBack, onPostUpdated }) {
     }
   };
 
-  // 댓글 수정 핸들러
-  const handleCommentEdit = (commentId) => {
-    // TODO: 댓글 수정 기능 구현
-    console.log('댓글 수정:', commentId);
-    alert('댓글 수정 기능은 곧 구현될 예정입니다.');
-  };
-
-  // 댓글 삭제 핸들러
-  const handleCommentDelete = (commentId) => {
-    if (window.confirm('정말 이 댓글을 삭제하시겠습니까?')) {
-      // TODO: 댓글 삭제 API 호출
-      console.log('댓글 삭제:', commentId);
-      alert('댓글 삭제 기능은 곧 구현될 예정입니다.');
-    }
-  };
-
-  // 답글 수정 핸들러
+  // 답글 수정 핸들러 (댓글 수정 함수 재사용)
   const handleReplyEdit = (replyId) => {
-    // TODO: 답글 수정 기능 구현
-    console.log('답글 수정:', replyId);
-    alert('답글 수정 기능은 곧 구현될 예정입니다.');
+    handleCommentEdit(replyId);
   };
 
-  // 답글 삭제 핸들러
-  const handleReplyDelete = (replyId) => {
-    if (window.confirm('정말 이 답글을 삭제하시겠습니까?')) {
-      // TODO: 답글 삭제 API 호출
-      console.log('답글 삭제:', replyId);
-      alert('답글 삭제 기능은 곧 구현될 예정입니다.');
-    }
+  // 답글 삭제 핸들러 (댓글 삭제 함수 재사용)
+  const handleReplyDelete = async (replyId) => {
+    await handleCommentDelete(replyId);
   };
 
   // getImagesFromPost 함수 정의
@@ -415,31 +565,6 @@ export function CommunityDetail({ post, onBack, onPostUpdated }) {
     console.log('  - 수정/삭제 버튼 표시 여부:', canEdit);
   }, [isAuthenticated, currentUserNickname, currentUserId, post, displayPostData]);
 
-  const comments = [
-    {
-      id: 1,
-      authorName: '이영희',
-      authorNickname: '이영희',
-      content: '저도 최근에 다녀왔는데 정말 좋았어요!',
-      likes: 5,
-      replies: [
-        {
-          id: 11,
-          authorName: '김철수',
-          authorNickname: '김철수',
-          content: '감사합니다! 어느 계절에 가셨나요?',
-          likes: 2,
-        },
-      ],
-    },
-    {
-      id: 2,
-      authorName: '박민수',
-      authorNickname: '박민수',
-      content: '사진 공유해주시면 좋을 것 같아요!',
-      likes: 3,
-    },
-  ];
 
   const getCategoryColor = (category) => {
     switch (category) {
@@ -584,80 +709,179 @@ export function CommunityDetail({ post, onBack, onPostUpdated }) {
         
         {/* 댓글 작성 */}
         <div className="mb-6 bg-[#f5f5f5] rounded-lg p-4">
-          <textarea
-            placeholder="댓글을 입력하세요..."
-            className="w-full p-3 border-2 border-[#dedede] rounded-lg focus:outline-none focus:border-[#4442dd] resize-none"
-            rows={3}
-          />
-          <div className="flex justify-end mt-2">
-            <button className="px-6 py-2 bg-[#4442dd] text-white rounded-lg hover:bg-[#3331cc] transition-colors">
-              댓글 작성
-            </button>
-          </div>
+          {editingCommentId ? (
+            <div>
+              <textarea
+                value={editingCommentText}
+                onChange={(e) => setEditingCommentText(e.target.value)}
+                placeholder="댓글을 수정하세요..."
+                className="w-full p-3 border-2 border-[#dedede] rounded-lg focus:outline-none focus:border-[#4442dd] resize-none"
+                rows={3}
+              />
+              <div className="flex justify-end gap-2 mt-2">
+                <button
+                  onClick={() => {
+                    setEditingCommentId(null);
+                    setEditingCommentText('');
+                  }}
+                  className="px-6 py-2 border-2 border-[#dedede] text-black rounded-lg hover:border-[#4442dd] transition-colors"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={handleCommentUpdate}
+                  className="px-6 py-2 bg-[#4442dd] text-white rounded-lg hover:bg-[#3331cc] transition-colors"
+                >
+                  수정 완료
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <textarea
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="댓글을 입력하세요..."
+                className="w-full p-3 border-2 border-[#dedede] rounded-lg focus:outline-none focus:border-[#4442dd] resize-none"
+                rows={3}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                    handleCommentSubmit();
+                  }
+                }}
+              />
+              <div className="flex justify-end mt-2">
+                <button
+                  onClick={handleCommentSubmit}
+                  disabled={!newComment.trim()}
+                  className="px-6 py-2 bg-[#4442dd] text-white rounded-lg hover:bg-[#3331cc] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  댓글 작성
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* 댓글 리스트 */}
-        <div className="space-y-3">
-          {comments.map((comment) => (
-            <div key={comment.id}>
-              <div className="bg-[#f5f5f5] rounded-lg p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <p className="text-black">{comment.authorName}</p>
-                  <div className="flex items-center gap-3">
-                    <button className="text-[14px] text-[#666] hover:text-[#4442dd] transition-colors cursor-pointer">답글</button>
-                    {/* 내가 쓴 댓글일 때만 수정/삭제 표시 */}
-                    {isAuthenticated && currentUserNickname === comment.authorNickname && (
-                      <div className="flex items-center gap-2 text-[14px]">
-                        <span
-                          onClick={() => handleCommentEdit(comment.id)}
-                          className="text-[#666] hover:text-[#4442dd] cursor-pointer transition-colors"
-                        >
-                          수정
+        {loadingComments ? (
+          <div className="text-center py-8 text-[#666]">댓글을 불러오는 중...</div>
+        ) : comments.length === 0 ? (
+          <div className="text-center py-8 text-[#666]">댓글이 없습니다. 첫 댓글을 작성해보세요!</div>
+        ) : (
+          <div className="space-y-3">
+            {comments.map((comment) => (
+              <div key={comment.id}>
+                <div className="bg-[#f5f5f5] rounded-lg p-4">
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <p className="text-black font-semibold">{comment.authorName}</p>
+                      {/* 글 작성자 표시 */}
+                      {displayPostData.authorNickname === comment.authorNickname && (
+                        <span className="px-2 py-0.5 bg-[#4442dd] text-white text-[10px] rounded font-semibold">
+                          작성자
                         </span>
-                        <span className="text-[#dedede]">|</span>
-                        <span
-                          onClick={() => handleCommentDelete(comment.id)}
-                          className="text-[#666] hover:text-red-500 cursor-pointer transition-colors"
-                        >
-                          삭제
-                        </span>
-                      </div>
-                    )}
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => setReplyingToCommentId(replyingToCommentId === comment.id ? null : comment.id)}
+                        className="text-[14px] text-[#666] hover:text-[#4442dd] transition-colors cursor-pointer"
+                      >
+                        {replyingToCommentId === comment.id ? '취소' : '답글'}
+                      </button>
+                      {/* 내가 쓴 댓글일 때만 수정/삭제 표시 */}
+                      {isAuthenticated && currentUserNickname === comment.authorNickname && (
+                        <div className="flex items-center gap-2 text-[14px]">
+                          <span
+                            onClick={() => handleCommentEdit(comment.id)}
+                            className="text-[#666] hover:text-[#4442dd] cursor-pointer transition-colors"
+                          >
+                            수정
+                          </span>
+                          <span className="text-[#dedede]">|</span>
+                          <span
+                            onClick={() => handleCommentDelete(comment.id)}
+                            className="text-[#666] hover:text-red-500 cursor-pointer transition-colors"
+                          >
+                            삭제
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <p className="text-[#333] mb-2 whitespace-pre-line">{comment.content}</p>
+                  {/* 하트 버튼과 작성일 */}
+                  <div className="flex items-center justify-between mt-2">
+                    <p className="text-[12px] text-[#666]">{formatDate(comment.createdAt)}</p>
+                    <button
+                      onClick={() => handleCommentLike(comment.id)}
+                      className="flex items-center gap-1 hover:scale-110 transition-transform"
+                    >
+                      <Heart
+                        className={`w-4 h-4 transition-colors ${
+                          comment.isLiked
+                            ? 'fill-red-500 text-red-500'
+                            : 'fill-none text-[#666]'
+                        }`}
+                      />
+                      <span
+                        className={`text-[14px] transition-colors ${
+                          comment.isLiked ? 'text-red-500 font-semibold' : 'text-[#666]'
+                        }`}
+                      >
+                        {comment.likes}
+                      </span>
+                    </button>
                   </div>
                 </div>
-                <p className="text-[#333] mb-2">{comment.content}</p>
-                {/* 하트 버튼 (답글, 수정, 삭제 아래) */}
-                <div className="flex justify-end mt-2">
-                  <button
-                    onClick={() => handleCommentLike(comment.id)}
-                    className="flex items-center gap-1 hover:scale-110 transition-transform"
-                  >
-                    <Heart
-                      className={`w-4 h-4 transition-colors ${
-                        commentLikes[comment.id]
-                          ? 'fill-red-500 text-red-500'
-                          : 'fill-none text-[#666]'
-                      }`}
-                    />
-                    <span
-                      className={`text-[14px] transition-colors ${
-                        commentLikes[comment.id] ? 'text-red-500 font-semibold' : 'text-[#666]'
-                      }`}
-                    >
-                      {comment.likes + (commentLikes[comment.id] ? 1 : 0)}
-                    </span>
-                  </button>
-                </div>
-              </div>
 
-              {/* 답글 */}
-              {comment.replies && comment.replies.length > 0 && (
-                <div className="ml-8 mt-2 space-y-2">
-                  {comment.replies.map((reply) => (
-                    <div key={reply.id} className="bg-[#f5f5f5] rounded-lg p-4 border-l-4 border-[#4442dd]">
-                      <div className="flex items-start justify-between mb-2">
-                        <p className="text-black">{reply.authorName}</p>
-                        <div className="flex items-center gap-3">
+                {/* 답글 작성 폼 */}
+                {replyingToCommentId === comment.id && (
+                  <div className="ml-8 mt-2 bg-[#f5f5f5] rounded-lg p-4 border-l-4 border-[#4442dd]">
+                    <textarea
+                      value={replyText}
+                      onChange={(e) => setReplyText(e.target.value)}
+                      placeholder="답글을 입력하세요..."
+                      className="w-full p-3 border-2 border-[#dedede] rounded-lg focus:outline-none focus:border-[#4442dd] resize-none"
+                      rows={2}
+                    />
+                    <div className="flex justify-end gap-2 mt-2">
+                      <button
+                        onClick={() => {
+                          setReplyingToCommentId(null);
+                          setReplyText('');
+                        }}
+                        className="px-4 py-1 text-[14px] border-2 border-[#dedede] text-black rounded-lg hover:border-[#4442dd] transition-colors"
+                      >
+                        취소
+                      </button>
+                      <button
+                        onClick={() => handleReplySubmit(comment.id)}
+                        disabled={!replyText.trim()}
+                        className="px-4 py-1 text-[14px] bg-[#4442dd] text-white rounded-lg hover:bg-[#3331cc] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        답글 작성
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* 답글 리스트 */}
+                {comment.replies && comment.replies.length > 0 && (
+                  <div className="ml-8 mt-2 space-y-2">
+                    {comment.replies.map((reply) => (
+                      <div key={reply.id} className="bg-[#f5f5f5] rounded-lg p-4 border-l-4 border-[#4442dd]">
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <p className="text-black font-semibold">{reply.authorName}</p>
+                            {/* 글 작성자 표시 */}
+                            {displayPostData.authorNickname === reply.authorNickname && (
+                              <span className="px-2 py-0.5 bg-[#4442dd] text-white text-[10px] rounded font-semibold">
+                                작성자
+                              </span>
+                            )}
+                          </div>
                           {/* 내가 쓴 답글일 때만 수정/삭제 표시 */}
                           {isAuthenticated && currentUserNickname === reply.authorNickname && (
                             <div className="flex items-center gap-2 text-[14px]">
@@ -677,37 +901,38 @@ export function CommunityDetail({ post, onBack, onPostUpdated }) {
                             </div>
                           )}
                         </div>
-                      </div>
-                      <p className="text-[#333] mb-2">{reply.content}</p>
-                      {/* 하트 버튼 (수정, 삭제 아래) */}
-                      <div className="flex justify-end mt-2">
-                        <button
-                          onClick={() => handleReplyLike(reply.id)}
-                          className="flex items-center gap-1 hover:scale-110 transition-transform"
-                        >
-                          <Heart
-                            className={`w-4 h-4 transition-colors ${
-                              replyLikes[reply.id]
-                                ? 'fill-red-500 text-red-500'
-                                : 'fill-none text-[#666]'
-                            }`}
-                          />
-                          <span
-                            className={`text-[14px] transition-colors ${
-                              replyLikes[reply.id] ? 'text-red-500 font-semibold' : 'text-[#666]'
-                            }`}
+                        <p className="text-[#333] mb-2 whitespace-pre-line">{reply.content}</p>
+                        {/* 하트 버튼과 작성일 */}
+                        <div className="flex items-center justify-between mt-2">
+                          <p className="text-[12px] text-[#666]">{formatDate(reply.createdAt)}</p>
+                          <button
+                            onClick={() => handleReplyLike(reply.id)}
+                            className="flex items-center gap-1 hover:scale-110 transition-transform"
                           >
-                            {reply.likes + (replyLikes[reply.id] ? 1 : 0)}
-                          </span>
-                        </button>
+                            <Heart
+                              className={`w-4 h-4 transition-colors ${
+                                reply.isLiked
+                                  ? 'fill-red-500 text-red-500'
+                                  : 'fill-none text-[#666]'
+                              }`}
+                            />
+                            <span
+                              className={`text-[14px] transition-colors ${
+                                reply.isLiked ? 'text-red-500 font-semibold' : 'text-[#666]'
+                              }`}
+                            >
+                              {reply.likes}
+                            </span>
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* 수정 모달 */}
