@@ -40,13 +40,22 @@ export default function TravelHubHome() {
               지역별 관광지, 추천 루트, 이용 팁까지 — Travel Hub에서 여행 계획을 더 간편하게 세워보세요.
             </p>
 
-            <div className="flex gap-3 mb-6">
+            {/* Hero 버튼들 */}
+            <div className="flex flex-wrap gap-3 mb-6">
               <Link
                 to="/explore"
                 className="inline-flex items-center gap-2 px-5 py-3 bg-sky-600 text-white rounded-lg shadow hover:bg-sky-700 transition"
               >
                 <MapPin className="w-4 h-4" />
                 지역 둘러보기
+              </Link>
+
+              {/* 축제 페이지 버튼 추가 */}
+              <Link
+                to="/festivals"
+                className="inline-flex items-center gap-2 px-5 py-3 bg-yellow-500 text-white rounded-lg shadow hover:bg-yellow-600 transition"
+              >
+                🎉 현재 진행 중인 축제
               </Link>
             </div>
 
@@ -70,7 +79,7 @@ export default function TravelHubHome() {
           </div>
         </section>
 
-        {/* Grid: 지역 카드 */}
+        {/* Grid: 인기 지역 */}
         <section className="mt-8">
           <h3 className="text-xl font-semibold mb-4">인기 지역 둘러보기</h3>
           <SpotList spotList={spots} />
