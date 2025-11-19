@@ -204,54 +204,38 @@ const SpotDetail = () => { // 임시값 추가
              <div className="space-y-4">
               {reviews?.map((review, index) => (
                 <div 
-                  key={index}
+                  key={index} 
                   className="bg-white border border-gray-200 rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow"
                 >
                   {/* 사용자 정보 + 별점 */}
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      {/* 프로필 이미지 자리 */}
                       <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 text-lg font-semibold">
                         {review?.nickname?.[0] || "?"}
                       </div>
-
                       <div>
-                        <p className="text-[16px] text-black font-medium">
-                          {review?.nickname}
-                        </p>
-                        <p className="text-[13px] text-gray-500">
-                          {formatDate(review?.createdAt)}
-                        </p>
+                        <p className="text-[16px] text-black font-medium">{review?.nickname}</p>
+                        <p className="text-[13px] text-gray-500">{formatDate(review?.createdAt)}</p>
                       </div>
                     </div>
-
-                    {/* 별점 */}
                     <div className="flex items-center gap-1">
                       {[...Array(5)].map((_, i) => (
                         <Star
                           key={i}
-                          className={`w-5 h-5 ${
-                            i < review.rating
-                              ? "fill-yellow-400 text-yellow-400"
-                              : "fill-gray-300 text-gray-300"
-                          }`}
+                          className={`w-5 h-5 ${i < review.rating ? "fill-yellow-400 text-yellow-400" : "fill-gray-300 text-gray-300"}`}
                         />
                       ))}
                     </div>
                   </div>
 
-                  {/* 리뷰 텍스트(코멘트) */}
+                  {/* 리뷰 텍스트 */}
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <p className="text-[15px] text-gray-700 leading-relaxed whitespace-pre-line">
                       {review?.comment}
                     </p>
                   </div>
                 </div>
-                <p className="text-[16px] text-[#333] leading-relaxed">
-                  {review.comment}
-                </p>
-              </div>
-            ))}
+              ))}
              </div>
         </div>
       </div>
