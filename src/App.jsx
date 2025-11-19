@@ -7,6 +7,7 @@ import Signup from "./pages/signup";
 import Login from "./pages/login";
 import SearchResults from "./pages/SearchResults";
 import SpotDetail from "./pages/spotDetail";
+import OAuthCallback from "./pages/OAuthCallback";
 import Community from "./pages/community";
 import AreaBasedListPage from "./pages/area_based_list_page";
 import FestivalListPage from "./pages/FestivalListPage";
@@ -39,6 +40,8 @@ const App = () => {
           path="/signup"
           element={isAuthenticated ? <Navigate to="/" /> : <Signup />}
         />
+        <Route path="/oauth/callback" element={<OAuthCallback />} />
+        
 
         {/* 커뮤니티 */}
         <Route path="/community" element={<Community />} />

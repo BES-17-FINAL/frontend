@@ -2,6 +2,15 @@ import api from "./api";
 import StorageService from "./storage";
 
 export const authService = {
+  async fetchUserWithToken(token) {
+    // token으로 유저 정보 가져오기
+    const response = await api.get("/auth/me", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const user = response.data;
+  },
+  
   async login(userData) {
     const response = await api.post("/auth/login", userData);
     const { token, nickname, email, user } = response.data;
@@ -23,12 +32,10 @@ export const authService = {
       localStorage.setItem("user", JSON.stringify({ nickname, email }));
     }
 
-    return response.data;
-  },
+    StorageService.setAccessToken(token);
+    StorageService.setUser(user);
 
-  async register(userData) {
-    const response = await api.post("/auth/signup", userData);
-    return response.data;
+    return user;
   },
 
   logout() {
@@ -41,8 +48,7 @@ export const authService = {
   },
 
   getCurrentUser() {
-    const userStr = localStorage.getItem("user");
-    return userStr ? JSON.parse(userStr) : null;
+    return StorageService.getUser();
   },
 
   isAuthenticated() {
