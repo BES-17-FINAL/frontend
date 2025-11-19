@@ -1,6 +1,6 @@
 import { Heart } from 'lucide-react';
 import { Bookmark, Image as ImageIcon, Edit2, Trash2 } from 'lucide-react';
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import useAuthStore from '../../store/authStore';
 import { PostWriteModal } from './PostWriteModal';
 import api, { getImageUrl } from '../../services/api';
@@ -22,9 +22,19 @@ export function CommunityDetail({ post, onBack, onPostUpdated }) {
     );
   }
 
+  // 게시글 데이터 상태 관리
+  const [postData, setPostData] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // 조회수 증가 중복 방지용 ref (post.id를 키로 사용)
+  const fetchedPostIdsRef = useRef(new Set());
+  const viewCountIncrementedRef = useRef(new Set());
+  const abortControllerRef = useRef(null);
+  
   // 게시글 좋아요 상태 관리 (백엔드에서 받은 초기값 사용)
   const [isLiked, setIsLiked] = useState(post.isLiked || false);
   const [likeCount, setLikeCount] = useState(post.likes || 0);
+  const [viewCount, setViewCount] = useState(post.views || 0);
 
   // 댓글 좋아요 상태 관리 (댓글 ID를 키로 사용)
   const [commentLikes, setCommentLikes] = useState({});
@@ -54,14 +64,168 @@ export function CommunityDetail({ post, onBack, onPostUpdated }) {
   }, [user]);
 
 
-  // 게시글 좋아요 토글 함수
-  const handleLikeClick = () => {
-    if (isLiked) {
-      setIsLiked(false);
-      setLikeCount(prev => prev - 1);
+  // 조회수 증가 API 호출 (한 번만, localStorage로 추적)
+  const incrementViewCount = async () => {
+    if (!post?.id) return;
+    
+    const postId = post.id;
+    const storageKey = `post_view_${postId}`;
+    
+    // localStorage에서 이미 조회수 증가를 호출했는지 확인
+    const hasIncremented = localStorage.getItem(storageKey);
+    if (hasIncremented) {
+      console.log('조회수 증가 이미 호출됨 (localStorage), 스킵:', postId);
+      return;
+    }
+    
+    // ref에서도 확인 (이중 체크)
+    if (viewCountIncrementedRef.current.has(postId)) {
+      console.log('조회수 증가 이미 호출됨 (ref), 스킵:', postId);
+      return;
+    }
+    
+    try {
+      // 즉시 localStorage와 ref에 저장 (중복 방지)
+      localStorage.setItem(storageKey, 'true');
+      viewCountIncrementedRef.current.add(postId);
+      
+      await api.post(`/api/posts/${postId}/view`);
+      console.log('조회수 증가 성공:', postId);
+    } catch (error) {
+      // AbortError는 무시 (요청 취소)
+      if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
+        console.log('조회수 증가 요청 취소됨');
+        return;
+      }
+      console.error('조회수 증가 실패:', error);
+      // 실패 시 localStorage와 ref에서 제거하여 재시도 가능하도록
+      localStorage.removeItem(storageKey);
+      viewCountIncrementedRef.current.delete(postId);
+    }
+  };
+
+  // 게시글 상세 정보 불러오기 (조회수 증가 없이)
+  const fetchPostDetail = async () => {
+    if (!post?.id) return;
+    
+    try {
+      setIsLoading(true);
+      // 조회수 증가 없이 데이터만 가져오기
+      const response = await api.get(`/api/posts/${post.id}/data`);
+      const updatedPost = response.data;
+      
+      console.log('🟢 [게시글 상세] 받은 데이터:', updatedPost);
+      console.log('🟢 [게시글 상세] isLiked:', updatedPost.isLiked, '타입:', typeof updatedPost.isLiked);
+      console.log('🟢 [게시글 상세] liked:', updatedPost.liked, '타입:', typeof updatedPost.liked);
+      console.log('🟢 [게시글 상세] likeCount:', updatedPost.likeCount);
+      console.log('🟢 [게시글 상세] 전체 키:', Object.keys(updatedPost));
+      
+      // 조회수 업데이트
+      setViewCount(updatedPost.viewCount || 0);
+      // 좋아요 상태 업데이트 (백엔드에서 받은 값으로 덮어쓰기)
+      // Jackson이 isLiked를 liked로 직렬화할 수 있으므로 둘 다 확인
+      const newIsLiked = updatedPost.isLiked === true || 
+                        updatedPost.liked === true || 
+                        updatedPost.isLiked === 'true' || 
+                        updatedPost.liked === 'true';
+      console.log('🟢 [게시글 상세] 변환된 isLiked:', newIsLiked);
+      setIsLiked(!!newIsLiked); // 명시적으로 boolean으로 변환
+      setLikeCount(updatedPost.likeCount || 0);
+      
+      // 전체 postData 업데이트
+      setPostData(updatedPost);
+    } catch (error) {
+      console.error('❌ [게시글 상세] 정보 불러오기 실패:', error);
+      console.error('❌ [게시글 상세] 에러 응답:', error.response?.data);
+      console.error('❌ [게시글 상세] 에러 상태:', error.response?.status);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 컴포넌트 마운트 시 조회수 증가 (한 번만) 및 게시글 상세 불러오기
+  useEffect(() => {
+    if (!post?.id) return;
+    
+    const postId = post.id;
+    const storageKey = `post_view_${postId}`;
+    
+    // 이전 요청 취소
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    
+    // 새로운 AbortController 생성
+    abortControllerRef.current = new AbortController();
+    
+    const hasFetched = fetchedPostIdsRef.current.has(postId);
+    // localStorage와 ref 모두 확인
+    const hasIncrementedView = localStorage.getItem(storageKey) || viewCountIncrementedRef.current.has(postId);
+    
+    // 조회수 증가 (한 번만, 게시글당)
+    if (!hasIncrementedView) {
+      incrementViewCount();
+    }
+    
+    // 게시글 상세 정보 불러오기
+    if (!hasFetched) {
+      fetchedPostIdsRef.current.add(postId);
+      fetchPostDetail();
     } else {
-      setIsLiked(true);
-      setLikeCount(prev => prev + 1);
+      // 이미 조회한 게시글이면 조회수 증가 없이 데이터만 가져오기
+      fetchPostDetail();
+    }
+    
+    // cleanup: 컴포넌트 언마운트 시 요청 취소
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [post?.id]);
+
+  // 게시글 좋아요 토글 함수
+  const handleLikeClick = async () => {
+    if (!post?.id) return;
+    
+    // 로그인 확인
+    if (!isAuthenticated) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+    
+    // 낙관적 업데이트 (즉시 UI 업데이트)
+    const previousLiked = isLiked;
+    const previousCount = likeCount;
+    
+    setIsLiked(!previousLiked);
+    setLikeCount(previousLiked ? previousCount - 1 : previousCount + 1);
+    
+    try {
+      console.log('🔵 [좋아요] API 호출 시작, postId:', post.id);
+      // 백엔드 API 호출
+      const response = await api.post(`/api/posts/${post.id}/like`);
+      console.log('🟢 [좋아요] API 호출 성공:', response);
+      
+      // 성공 시 최신 데이터로 업데이트
+      await fetchPostDetail();
+      console.log('🟢 [좋아요] 데이터 업데이트 완료');
+    } catch (error) {
+      console.error('❌ [좋아요] 토글 실패:', error);
+      console.error('❌ [좋아요] 에러 응답:', error.response?.data);
+      console.error('❌ [좋아요] 에러 상태:', error.response?.status);
+      console.error('❌ [좋아요] 에러 메시지:', error.message);
+      
+      // 실패 시 이전 상태로 복구
+      setIsLiked(previousLiked);
+      setLikeCount(previousCount);
+      
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.error || 
+                          error.message || 
+                          '알 수 없는 오류';
+      alert(`좋아요 처리에 실패했습니다.\n\n에러: ${errorMessage}`);
     }
   };
 
@@ -198,36 +362,40 @@ export function CommunityDetail({ post, onBack, onPostUpdated }) {
     }
   };
 
-  // 전달받은 post 객체에서 데이터 매핑
-  const getImagesFromPost = () => {
-    if (post.images && Array.isArray(post.images) && post.images.length > 0) {
+  // getImagesFromPost 함수 정의
+  const getImagesFromPost = (sourcePost = post) => {
+    if (sourcePost.images && Array.isArray(sourcePost.images) && sourcePost.images.length > 0) {
       // PostImageResponse 배열인 경우
-      return post.images.map(img => {
+      return sourcePost.images.map(img => {
         if (typeof img === 'string') return img;
         return img.imageUrl || img.url || img;
       }).filter(Boolean); // null/undefined 제거
     }
     // thumbnailUrl이 있는 경우
-    if (post.thumbnailUrl) {
-      return [post.thumbnailUrl];
+    if (sourcePost.thumbnailUrl) {
+      return [sourcePost.thumbnailUrl];
     }
     return [];
   };
 
-  const postData = useMemo(() => ({
-    id: post.id,
-    title: post.title || post.content || '제목 없음',
-    author: post.authorName || post.nickname || '익명',
-    authorNickname: post.authorNickname || post.nickname || post.authorName || '익명',
-    authorId: post.userId,
-    authorAvatar: post.authorAvatar || '#4442dd',
-    date: formatDate(post.createdAt),
-    likes: post.likes || 0,
-    views: post.views || 0,
-    category: post.category || '잡담',
-    images: getImagesFromPost(),
-    content: post.fullContent || post.content || '',
-  }), [post]);
+  // postData 계산 (postData state가 있으면 우선 사용, 없으면 post prop 사용)
+  const displayPostData = useMemo(() => {
+    const source = postData || post;
+    return {
+      id: source.id,
+      title: source.title || source.content || '제목 없음',
+      author: source.authorName || source.nickname || '익명',
+      authorNickname: source.authorNickname || source.nickname || source.authorName || '익명',
+      authorId: source.userId,
+      authorAvatar: source.authorAvatar || '#4442dd',
+      date: formatDate(source.createdAt),
+      likes: likeCount, // 상태에서 가져오기
+      views: viewCount, // 상태에서 가져오기
+      category: source.category || '잡담',
+      images: getImagesFromPost(source),
+      content: source.fullContent || source.content || '',
+    };
+  }, [postData, post, likeCount, viewCount]);
 
   // 디버깅: 현재 상태 확인
   useEffect(() => {
@@ -237,15 +405,15 @@ export function CommunityDetail({ post, onBack, onPostUpdated }) {
     console.log('  - currentUserId:', currentUserId);
     console.log('  - post.authorNickname:', post?.authorNickname || post?.nickname);
     console.log('  - post.userId:', post?.userId);
-    console.log('  - postData.authorNickname:', postData.authorNickname);
-    console.log('  - postData.authorId:', postData.authorId);
+    console.log('  - displayPostData.authorNickname:', displayPostData.authorNickname);
+    console.log('  - displayPostData.authorId:', displayPostData.authorId);
     
     const canEdit = isAuthenticated && (
-      (currentUserNickname && postData.authorNickname && currentUserNickname === postData.authorNickname) ||
-      (currentUserId && postData.authorId && currentUserId === postData.authorId)
+      (currentUserNickname && displayPostData.authorNickname && currentUserNickname === displayPostData.authorNickname) ||
+      (currentUserId && displayPostData.authorId && currentUserId === displayPostData.authorId)
     );
     console.log('  - 수정/삭제 버튼 표시 여부:', canEdit);
-  }, [isAuthenticated, currentUserNickname, currentUserId, post, postData]);
+  }, [isAuthenticated, currentUserNickname, currentUserId, post, displayPostData]);
 
   const comments = [
     {
@@ -296,29 +464,29 @@ export function CommunityDetail({ post, onBack, onPostUpdated }) {
       <div className="bg-white border-2 border-[#dedede] rounded-lg p-8 mb-8">
         {/* 카테고리 & 제목 */}
         <div className="mb-4">
-          <span className={`px-3 py-1 rounded text-[14px] ${getCategoryColor(postData.category)}`}>
-            {postData.category}
+          <span className={`px-3 py-1 rounded text-[14px] ${getCategoryColor(displayPostData.category)}`}>
+            {displayPostData.category}
           </span>
         </div>
         <div className="flex items-start justify-between mb-6">
-          <h1 className="text-[32px] text-black flex-1">{postData.title}</h1>
+          <h1 className="text-[32px] text-black flex-1">{displayPostData.title}</h1>
           
           {/* 내가 쓴 글일 때만 수정/삭제 버튼 표시 */}
           {(() => {
             const canEdit = isAuthenticated && (
-              (currentUserNickname && postData.authorNickname && currentUserNickname === postData.authorNickname) ||
-              (currentUserId && postData.authorId && currentUserId === postData.authorId)
+              (currentUserNickname && displayPostData.authorNickname && currentUserNickname === displayPostData.authorNickname) ||
+              (currentUserId && displayPostData.authorId && currentUserId === displayPostData.authorId)
             );
             
             if (!canEdit) {
               console.log('❌ [CommunityDetail] 수정/삭제 버튼 표시 안 함:', {
                 isAuthenticated,
                 currentUserNickname,
-                postDataAuthorNickname: postData.authorNickname,
-                nicknameMatch: currentUserNickname === postData.authorNickname,
+                postDataAuthorNickname: displayPostData.authorNickname,
+                nicknameMatch: currentUserNickname === displayPostData.authorNickname,
                 currentUserId,
-                postDataAuthorId: postData.authorId,
-                userIdMatch: currentUserId === postData.authorId
+                postDataAuthorId: displayPostData.authorId,
+                userIdMatch: currentUserId === displayPostData.authorId
               });
             }
             
@@ -348,17 +516,17 @@ export function CommunityDetail({ post, onBack, onPostUpdated }) {
         <div className="flex items-center gap-4 mb-6 pb-6 border-b-2 border-[#dedede]">
           <div
             className="w-10 h-10 rounded-full flex items-center justify-center text-white"
-            style={{ backgroundColor: postData.authorAvatar }}
+            style={{ backgroundColor: displayPostData.authorAvatar }}
           >
-            <span>{postData.author[0]}</span>
+            <span>{displayPostData.author[0]}</span>
           </div>
-          <span className="text-black">{postData.author}</span>
-          <span className="text-[#666]">{postData.date}</span>
-          <span className="text-[#666]">조회 {postData.views}</span>
+          <span className="text-black">{displayPostData.author}</span>
+          <span className="text-[#666]">{displayPostData.date}</span>
+          <span className="text-[#666]">조회 {displayPostData.views}</span>
           <div className="ml-auto flex items-center gap-4">
             <button className="flex items-center gap-2 hover:text-[#4442dd] transition-colors">
               <Heart className="w-5 h-5 text-[#666]" />
-              <span className="text-[#666]">{postData.likes}</span>
+              <span className="text-[#666]">{displayPostData.likes}</span>
             </button>
             <button className="hover:text-[#4442dd] transition-colors">
               <Bookmark className="w-5 h-5 text-[#666]" />
@@ -367,9 +535,9 @@ export function CommunityDetail({ post, onBack, onPostUpdated }) {
         </div>
 
         {/* 이미지 */}
-        {postData.images && postData.images.length > 0 && (
+        {displayPostData.images && displayPostData.images.length > 0 && (
           <div className="mb-6 space-y-4">
-            {postData.images.map((img, idx) => (
+            {displayPostData.images.map((img, idx) => (
               <img
                 key={idx}
                 src={getImageUrl(img)}
@@ -388,7 +556,7 @@ export function CommunityDetail({ post, onBack, onPostUpdated }) {
         {/* 본문 */}
         <div className="py-6">
           <p className="text-[#333] whitespace-pre-line leading-relaxed">
-            {postData.content}
+            {displayPostData.content}
           </p>
         </div>
 
