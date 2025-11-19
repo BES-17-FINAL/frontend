@@ -105,7 +105,7 @@ const SpotDetail = () => {
               <Star
                 key={i}
                 className={`w-6 h-6 ${
-                  i < rating ? "fill-yellow-400 text-yellow-400" : "fill-gray-300 text-gray-300"
+                  i <= rating - 1 ? "fill-yellow-400 text-yellow-400" : "fill-gray-300 text-gray-300"
                 }`}
               />
             ))}

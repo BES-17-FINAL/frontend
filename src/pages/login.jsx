@@ -25,7 +25,7 @@ const Login = () => {
       const loginData = isEmail(formData.email)
         ? { email: formData.email, password: formData.password }
         : { username: formData.email, password: formData.password };
-
+      console.log(loginData);
       await login(loginData);
       navigate("/");
     } catch (err) {

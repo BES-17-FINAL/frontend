@@ -33,9 +33,12 @@ export const authService = {
     }
 
     StorageService.setAccessToken(token);
-    StorageService.setUser(user);
+    // StorageService.setUser에 넘길 데이터 결정
+    const userDataToStore = user || { nickname, email };
+    StorageService.setUser(userDataToStore);
 
-    return user;
+    
+    return StorageService.getUser();
   },
 
   logout() {

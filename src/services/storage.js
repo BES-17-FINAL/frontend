@@ -11,7 +11,8 @@ const StorageService = {
   setRefreshToken: (token) => localStorage.setItem(StorageKeys.REFRESH_TOKEN, token),
   getUser: () => {
     const user = localStorage.getItem(StorageKeys.USER);
-    return user ? JSON.parse(user) : null;
+    if (!user || user === "undefined" || user === "null") return null; // 안전하게 처리
+    return JSON.parse(user);
   },
   setUser: (user) => localStorage.setItem(StorageKeys.USER, JSON.stringify(user)),
   clear: () => {
