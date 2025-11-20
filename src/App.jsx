@@ -10,9 +10,8 @@ import Community from "./pages/community";
 import AreaBasedListPage from "./pages/area_based_list_page";
 import { UserProfile } from "./pages/profile"
 import FestivalListPage from "./pages/FestivalListPage";
-
 import useAuthStore from "./store/authStore";
-
+import SearchResults from "./pages/SearchResults";
 const App = () => {
   const { isAuthenticated } = useAuthStore();
 
@@ -42,8 +41,11 @@ const App = () => {
 
         {/* OAuth 콜백 */}
         <Route path="/oauth/callback" element={<OAuthCallback />} />
-
+        <Route path="/search" element={<SearchResults />}/>
         <Route path="/profile" element={isAuthenticated ?<UserProfile /> : <Navigate to="login" />} />
+        <Route path="/community" element={isAuthenticated ?<Community /> : <Navigate to="login" />} />
+        <Route path="/explore" element={<AreaBasedListPage />}/>
+        <Route path="/festivals" element={<FestivalListPage />}/>
       </Routes>
     </BrowserRouter>
   );
