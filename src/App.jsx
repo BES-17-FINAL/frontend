@@ -8,10 +8,11 @@ import SpotDetail from "./pages/spotDetail";
 import OAuthCallback from "./pages/OAuthCallback";
 import Community from "./pages/community";
 import AreaBasedListPage from "./pages/area_based_list_page";
-import { UserProfile } from "./pages/profile"
 import FestivalListPage from "./pages/FestivalListPage";
 import SearchResults from "./pages/SearchResults";
 
+
+import { UserProfile } from "./pages/profile"
 import useAuthStore from "./store/authStore";
 
 const App = () => {
