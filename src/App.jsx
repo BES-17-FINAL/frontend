@@ -10,6 +10,7 @@ import Community from "./pages/community";
 import AreaBasedListPage from "./pages/area_based_list_page";
 import { UserProfile } from "./pages/profile"
 import FestivalListPage from "./pages/FestivalListPage";
+import SearchResults from "./pages/SearchResults";
 
 import useAuthStore from "./store/authStore";
 
@@ -44,6 +45,20 @@ const App = () => {
         <Route path="/oauth/callback" element={<OAuthCallback />} />
 
         <Route path="/profile" element={isAuthenticated ?<UserProfile /> : <Navigate to="login" />} />
+      
+        {/* 커뮤니티 */}
+        <Route path="/community" element={<Community />} />
+
+        {/* 검색 결과 */}
+        <Route path="/search" element={<SearchResults />} />
+
+        {/* 지역 기반 관광 리스트 페이지 */}
+        <Route path="/explore" element={<AreaBasedListPage />} />
+
+
+        {/* 지역 축제 관광 리스트 페이지 */}
+        <Route path="/festivals" element={<FestivalListPage />} />
+
       </Routes>
     </BrowserRouter>
   );
