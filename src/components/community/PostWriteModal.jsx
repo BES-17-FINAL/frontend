@@ -1,6 +1,6 @@
 import { X, Image as ImageIcon } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import api from '../../services/api';
+import api, { getImageUrl } from '../../services/api';
 
 export function PostWriteModal({ onClose, onPostCreated, mode = 'create', initialPost = null }) {
   // 카테고리 Enum → 한글 변환
@@ -17,9 +17,14 @@ export function PostWriteModal({ onClose, onPostCreated, mode = 'create', initia
     category: '잡담',
     title: '',
     content: '',
-    images: []
+    images: [] // 새로 추가한 이미지 파일들
   });
+  const [existingImages, setExistingImages] = useState([]); // 기존 이미지 URL들
+  const [deletedImageUrls, setDeletedImageUrls] = useState([]); // 삭제된 기존 이미지 URL들
+  const [thumbnailIndex, setThumbnailIndex] = useState(0); // 썸네일 인덱스
   const [loading, setLoading] = useState(false);
+  const [draggedIndex, setDraggedIndex] = useState(null); // 드래그 중인 이미지 인덱스
+  const [dragOverIndex, setDragOverIndex] = useState(null); // 드래그 오버 중인 이미지 인덱스
 
   // 수정 모드일 때 초기 데이터 설정
   useEffect(() => {
@@ -28,8 +33,31 @@ export function PostWriteModal({ onClose, onPostCreated, mode = 'create', initia
         category: categoryToKorean(initialPost.category) || '잡담',
         title: initialPost.title || '',
         content: initialPost.fullContent || initialPost.content || '',
-        images: [] // 기존 이미지는 서버에 있으므로 빈 배열로 시작
+        images: [] // 새로 추가할 이미지 파일들
       });
+      
+      // 기존 이미지 URL 추출
+      if (initialPost.images && Array.isArray(initialPost.images) && initialPost.images.length > 0) {
+        const imageUrls = initialPost.images.map(img => {
+          if (typeof img === 'string') return img;
+          return img.imageUrl || img.url || img;
+        }).filter(Boolean);
+        setExistingImages(imageUrls);
+        
+        // 기존 이미지 중 썸네일 인덱스 찾기
+        const thumbnailIdx = initialPost.images.findIndex(img => img.isThumbnail || img.thumbnail);
+        setThumbnailIndex(thumbnailIdx >= 0 ? thumbnailIdx : 0);
+      } else {
+        setExistingImages([]);
+        setThumbnailIndex(0);
+      }
+      
+      setDeletedImageUrls([]); // 삭제된 이미지 목록 초기화
+    } else if (mode === 'create') {
+      // 작성 모드로 전환 시 초기화
+      setExistingImages([]);
+      setDeletedImageUrls([]);
+      setThumbnailIndex(0);
     }
   }, [mode, initialPost]);
 
@@ -47,8 +75,149 @@ export function PostWriteModal({ onClose, onPostCreated, mode = 'create', initia
     const files = Array.from(e.target.files);
     setFormData(prev => ({
       ...prev,
-      images: files
+      images: [...prev.images, ...files] // 기존 이미지에 추가
     }));
+    // 새 이미지가 추가되면 첫 번째 이미지를 썸네일로 설정 (기존 이미지가 없을 때만)
+    if (files.length > 0 && existingImages.length === 0 && formData.images.length === 0) {
+      setThumbnailIndex(0);
+    }
+  };
+
+  // 썸네일 변경 핸들러
+  const handleThumbnailChange = (index) => {
+    setThumbnailIndex(index);
+  };
+
+  // 드래그 시작 핸들러
+  const handleDragStart = (e, index) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.target.style.opacity = '0.5';
+  };
+
+  // 드래그 종료 핸들러
+  const handleDragEnd = (e) => {
+    e.target.style.opacity = '1';
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  // 드래그 오버 핸들러
+  const handleDragOver = (e, index) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverIndex(index);
+  };
+
+  // 드래그 리브 핸들러
+  const handleDragLeave = () => {
+    setDragOverIndex(null);
+  };
+
+  // 드롭 핸들러
+  const handleDrop = (e, dropIndex) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (draggedIndex === null || draggedIndex === dropIndex) {
+      setDraggedIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+
+    const isDraggedExisting = draggedIndex < existingImages.length;
+    const isDropExisting = dropIndex < existingImages.length;
+
+    if (isDraggedExisting && isDropExisting) {
+      // 기존 이미지끼리 순서 변경
+      const newExistingImages = [...existingImages];
+      const [draggedItem] = newExistingImages.splice(draggedIndex, 1);
+      newExistingImages.splice(dropIndex, 0, draggedItem);
+      setExistingImages(newExistingImages);
+      
+      // 썸네일 인덱스 조정
+      let newThumbnailIndex = thumbnailIndex;
+      if (draggedIndex === thumbnailIndex) {
+        // 드래그한 이미지가 썸네일이었으면 드롭 위치로 이동
+        newThumbnailIndex = dropIndex;
+      } else if (draggedIndex < thumbnailIndex && dropIndex >= thumbnailIndex) {
+        // 드래그한 이미지가 썸네일 앞에서 뒤로 이동
+        newThumbnailIndex = thumbnailIndex - 1;
+      } else if (draggedIndex > thumbnailIndex && dropIndex <= thumbnailIndex) {
+        // 드래그한 이미지가 썸네일 뒤에서 앞으로 이동
+        newThumbnailIndex = thumbnailIndex + 1;
+      }
+      setThumbnailIndex(newThumbnailIndex);
+    } else if (!isDraggedExisting && !isDropExisting) {
+      // 새 이미지끼리 순서 변경
+      const newImages = [...formData.images];
+      const draggedNewIndex = draggedIndex - existingImages.length;
+      const dropNewIndex = dropIndex - existingImages.length;
+      const [draggedItem] = newImages.splice(draggedNewIndex, 1);
+      newImages.splice(dropNewIndex, 0, draggedItem);
+      setFormData(prev => ({ ...prev, images: newImages }));
+      
+      // 썸네일 인덱스 조정
+      let newThumbnailIndex = thumbnailIndex;
+      if (draggedIndex === thumbnailIndex) {
+        // 드래그한 이미지가 썸네일이었으면 드롭 위치로 이동
+        newThumbnailIndex = dropIndex;
+      } else if (draggedIndex < thumbnailIndex && dropIndex >= thumbnailIndex) {
+        // 드래그한 이미지가 썸네일 앞에서 뒤로 이동
+        newThumbnailIndex = thumbnailIndex - 1;
+      } else if (draggedIndex > thumbnailIndex && dropIndex <= thumbnailIndex) {
+        // 드래그한 이미지가 썸네일 뒤에서 앞으로 이동
+        newThumbnailIndex = thumbnailIndex + 1;
+      }
+      setThumbnailIndex(newThumbnailIndex);
+    } else {
+      // 기존 이미지와 새 이미지 간 드래그는 제한적 (알림만 표시)
+      alert('기존 이미지와 새로 추가한 이미지 간 순서 변경은 제한적입니다.\n기존 이미지를 삭제하고 새 이미지를 추가한 후 순서를 조정해주세요.');
+    }
+
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  // 이미지 제거 핸들러
+  const handleRemoveImage = (index, isExisting = false) => {
+    const totalImages = existingImages.length + formData.images.length;
+    
+    if (isExisting) {
+      // 기존 이미지 삭제
+      const imageUrlToDelete = existingImages[index];
+      setExistingImages(prev => prev.filter((_, i) => i !== index));
+      setDeletedImageUrls(prev => [...prev, imageUrlToDelete]);
+      
+      // 썸네일 인덱스 조정
+      if (index < thumbnailIndex) {
+        setThumbnailIndex(Math.max(0, thumbnailIndex - 1));
+      } else if (index === thumbnailIndex && totalImages > 1) {
+        setThumbnailIndex(0);
+      }
+    } else {
+      // 새로 추가한 이미지 삭제
+      const newImages = formData.images.filter((_, i) => i !== index);
+      setFormData(prev => ({
+        ...prev,
+        images: newImages
+      }));
+      
+      // 제거된 이미지가 썸네일이었거나 그 이전이면 썸네일 인덱스 조정
+      const existingCount = existingImages.length;
+      const adjustedIndex = existingCount + index;
+      if (adjustedIndex <= thumbnailIndex) {
+        setThumbnailIndex(Math.max(0, thumbnailIndex - 1));
+      }
+    }
+    
+    // 모든 이미지가 제거되면 썸네일 인덱스 초기화
+    const remainingTotal = isExisting 
+      ? (existingImages.length - 1 + formData.images.length)
+      : (existingImages.length + formData.images.length - 1);
+    if (remainingTotal === 0) {
+      setThumbnailIndex(0);
+    }
   };
 
   // 카테고리 한글 → Enum 변환
@@ -81,12 +250,16 @@ export function PostWriteModal({ onClose, onPostCreated, mode = 'create', initia
       // FormData 생성 (MultipartFormData 형식)
       const formDataToSend = new FormData();
       
+      // 전체 이미지 개수 (기존 + 새로 추가)
+      const totalImageCount = existingImages.length + formData.images.length;
+      
       // PostRequest를 JSON 문자열로 추가
       const postRequest = {
         title: formData.title,
         content: formData.content,
         category: categoryToEnum(formData.category),
-        thumbnailIndex: formData.images.length > 0 ? 0 : null // 첫 번째 이미지를 썸네일로
+        thumbnailIndex: totalImageCount > 0 ? thumbnailIndex : null, // 사용자가 선택한 썸네일 인덱스
+        deletedImageUrls: deletedImageUrls.length > 0 ? deletedImageUrls : null // 삭제된 기존 이미지 URL들
       };
       
       formDataToSend.append('post', new Blob([JSON.stringify(postRequest)], {
@@ -223,10 +396,169 @@ export function PostWriteModal({ onClose, onPostCreated, mode = 'create', initia
                   onChange={handleImageChange}
                   className="hidden"
                 />
-                {formData.images.length > 0 && (
-                  <p className="text-[#4442dd] mt-2">{formData.images.length}개의 이미지 선택됨</p>
+                {(existingImages.length > 0 || formData.images.length > 0) && (
+                  <p className="text-[#4442dd] mt-2">
+                    기존 {existingImages.length}개 + 새로 추가 {formData.images.length}개
+                  </p>
                 )}
               </label>
+              
+              {/* 이미지 미리보기 (기존 이미지 + 새로 추가한 이미지) */}
+              {(existingImages.length > 0 || formData.images.length > 0) && (
+                <div className="mt-4">
+                  <p className="text-sm text-[#666] mb-2">
+                    이미지를 클릭하여 썸네일로 설정하세요 | 드래그하여 순서를 변경할 수 있습니다
+                  </p>
+                  <div className="grid grid-cols-3 gap-4">
+                    {/* 기존 이미지 표시 */}
+                    {existingImages.map((imageUrl, index) => {
+                      const globalIndex = index; // 전체 이미지 중 인덱스
+                      return (
+                        <div 
+                          key={`existing-${index}-${imageUrl}`}
+                          draggable={true}
+                          onDragStart={(e) => {
+                            e.stopPropagation();
+                            handleDragStart(e, globalIndex);
+                          }}
+                          onDragEnd={(e) => {
+                            e.stopPropagation();
+                            handleDragEnd(e);
+                          }}
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleDragOver(e, globalIndex);
+                          }}
+                          onDragLeave={(e) => {
+                            e.stopPropagation();
+                            handleDragLeave();
+                          }}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleDrop(e, globalIndex);
+                          }}
+                          className={`relative cursor-move transition-all rounded-lg ${
+                            globalIndex === thumbnailIndex ? 'ring-4 ring-[#4442dd] ring-offset-2' : ''
+                          } ${
+                            draggedIndex === globalIndex ? 'opacity-50' : ''
+                          } ${
+                            dragOverIndex === globalIndex && draggedIndex !== globalIndex ? 'ring-2 ring-blue-400 ring-offset-2' : ''
+                          }`}
+                          onClick={(e) => {
+                            // X 버튼 클릭이 아닐 때만 썸네일 변경
+                            if (e.target.tagName !== 'BUTTON') {
+                              handleThumbnailChange(globalIndex);
+                            }
+                          }}
+                        >
+                          <img
+                            src={getImageUrl(imageUrl)}
+                            alt={`기존 이미지 ${index + 1}`}
+                            className={`w-full h-24 object-cover rounded-lg border-2 ${
+                              globalIndex === thumbnailIndex ? 'border-[#4442dd]' : 'border-[#dedede]'
+                            }`}
+                            draggable={false}
+                            onError={(e) => {
+                              console.error('이미지 로드 실패:', imageUrl);
+                              e.target.style.display = 'none';
+                            }}
+                          />
+                          {globalIndex === thumbnailIndex && (
+                            <span className="absolute top-1 left-1 bg-[#4442dd] text-white text-xs px-2 py-1 rounded font-bold z-20">
+                              썸네일
+                            </span>
+                          )}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation(); // 클릭 이벤트 전파 방지
+                              handleRemoveImage(index, true); // 기존 이미지 삭제
+                            }}
+                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600 transition-colors z-20"
+                            title="이미지 제거"
+                            onMouseDown={(e) => e.stopPropagation()} // 드래그 방지
+                          >
+                            ×
+                          </button>
+                        </div>
+                      );
+                    })}
+                    {/* 새로 추가한 이미지 표시 */}
+                    {formData.images.map((file, index) => {
+                      const globalIndex = existingImages.length + index; // 전체 이미지 중 인덱스
+                      return (
+                        <div 
+                          key={`new-${index}-${file.name}`}
+                          draggable={true}
+                          onDragStart={(e) => {
+                            e.stopPropagation();
+                            handleDragStart(e, globalIndex);
+                          }}
+                          onDragEnd={(e) => {
+                            e.stopPropagation();
+                            handleDragEnd(e);
+                          }}
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleDragOver(e, globalIndex);
+                          }}
+                          onDragLeave={(e) => {
+                            e.stopPropagation();
+                            handleDragLeave();
+                          }}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleDrop(e, globalIndex);
+                          }}
+                          className={`relative cursor-move transition-all rounded-lg ${
+                            globalIndex === thumbnailIndex ? 'ring-4 ring-[#4442dd] ring-offset-2' : ''
+                          } ${
+                            draggedIndex === globalIndex ? 'opacity-50' : ''
+                          } ${
+                            dragOverIndex === globalIndex && draggedIndex !== globalIndex ? 'ring-2 ring-blue-400 ring-offset-2' : ''
+                          }`}
+                          onClick={(e) => {
+                            // X 버튼 클릭이 아닐 때만 썸네일 변경
+                            if (e.target.tagName !== 'BUTTON') {
+                              handleThumbnailChange(globalIndex);
+                            }
+                          }}
+                        >
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt={`새 이미지 ${index + 1}`}
+                            className={`w-full h-24 object-cover rounded-lg border-2 ${
+                              globalIndex === thumbnailIndex ? 'border-[#4442dd]' : 'border-[#dedede]'
+                            }`}
+                            draggable={false}
+                          />
+                          {globalIndex === thumbnailIndex && (
+                            <span className="absolute top-1 left-1 bg-[#4442dd] text-white text-xs px-2 py-1 rounded font-bold z-20">
+                              썸네일
+                            </span>
+                          )}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation(); // 클릭 이벤트 전파 방지
+                              handleRemoveImage(index, false); // 새 이미지 삭제
+                            }}
+                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600 transition-colors z-20"
+                            title="이미지 제거"
+                            onMouseDown={(e) => e.stopPropagation()} // 드래그 방지
+                          >
+                            ×
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

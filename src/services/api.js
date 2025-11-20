@@ -33,4 +33,24 @@ api.interceptors.response.use(
   }
 );
 
+// 이미지 URL 처리 함수
+export const getImageUrl = (imageUrl) => {
+  if (!imageUrl) {
+    return null;
+  }
+  
+  // 이미 완전한 URL인 경우 (http:// 또는 https://로 시작)
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    return imageUrl;
+  }
+  
+  // 상대 경로인 경우 (예: /images/xxx.jpg)
+  if (imageUrl.startsWith('/')) {
+    return `${API_URL}${imageUrl}`;
+  }
+  
+  // 그 외의 경우
+  return `${API_URL}/images/${imageUrl}`;
+};
+
 export default api;
