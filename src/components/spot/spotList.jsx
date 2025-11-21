@@ -30,7 +30,7 @@ const SpotList = ({ spotList }) => {
       ref={containerRef}
       className="flex overflow-x-scroll scroll-smooth overflow-y-hidden w-full h-[300px] snap-x snap-mandatory"
     >
-      {spotList.map((spot) => (
+      {spotList?.map((spot) => (
         <div
           key={spot.id}
           className="w-[200px] h-[250px] m-4 bg-white rounded-lg shadow-md p-4 snap-start flex-shrink-0"
