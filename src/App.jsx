@@ -14,7 +14,6 @@ import SearchResults from "./pages/SearchResults";
 
 import { UserProfile } from "./pages/profile"
 import useAuthStore from "./store/authStore";
-import SearchResults from "./pages/SearchResults";
 const App = () => {
   const { isAuthenticated } = useAuthStore();
 
