@@ -1,15 +1,25 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect} from "react";
+import { useLocation } from "react-router-dom";
 import Header from "../components/layout/Header";
 
 function AreaBasedListPage() {
+
+    // {지역} 자세히보기 초기값 설정
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const initialArea = params.get("areaCode") || "1";
+
+  
   const [places, setPlaces] = useState([]);
-  const [areaCode, setAreaCode] = useState("1");
+  const [areaCode, setAreaCode] = useState(initialArea);
   const [contentTypeId, setContentTypeId] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [pageNo, setPageNo] = useState(1); // ⭐ 페이지 상태 추가
   const [totalCount, setTotalCount] = useState(0);
 
+
+  
   // API 호출 함수
   const fetchPlaces = async (area, contentType, page) => {
     setLoading(true);

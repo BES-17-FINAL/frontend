@@ -118,12 +118,12 @@ export default function TravelHubHome() {
           <h3 className="text-xl font-semibold mb-4">지역별 탐색</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
-              { name: "서울", desc: "도심과 전통이 공존하는 곳" },
-              { name: "부산", desc: "바다와 먹거리의 도시" },
-              { name: "제주", desc: "자연 그대로의 섬" },
-              { name: "강원", desc: "산과 해안 드라이브 추천" },
-              { name: "경주", desc: "역사 유적 탐방" },
-              { name: "전주", desc: "한옥과 전통음식" },
+              { name: "서울", desc: "도심과 전통이 공존하는 곳", code: "1" },
+              { name: "부산", desc: "바다와 먹거리의 도시", code: "6" },
+              { name: "제주", desc: "자연 그대로의 섬", code: "39" },
+              { name: "강원", desc: "산과 해안 드라이브 추천", code: "32" },
+              { name: "경주", desc: "역사 유적 탐방", code: "37" },
+              { name: "전주", desc: "한옥과 전통음식", code: "35" },
             ].map((region) => (
               <article
                 key={region.name}
@@ -140,14 +140,14 @@ export default function TravelHubHome() {
                 </div>
                 <div className="mt-4 flex items-center justify-between">
                   <Link
-                    to={`/region/${region.name}`}
+                    to={`/explore?areaCode=${region.code}`}
                     className="text-sm text-indigo-600"
                   >
                     자세히 보기 →
                   </Link>
-                  <button className="text-sm px-3 py-1 border rounded">
+                  {/* <button className="text-sm px-3 py-1 border rounded">
                     즐겨찾기
-                  </button>
+                  </button> */}
                 </div>
               </article>
             ))}

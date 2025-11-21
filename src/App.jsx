@@ -56,9 +56,9 @@ const App = () => {
         {/* 지역 기반 관광 리스트 페이지 */}
         <Route path="/explore" element={<AreaBasedListPage />} />
 
-
         {/* 지역 축제 관광 리스트 페이지 */}
         <Route path="/festivals" element={<FestivalListPage />} />
+
 
       </Routes>
     </BrowserRouter>
