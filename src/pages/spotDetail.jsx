@@ -91,9 +91,11 @@ const SpotDetail = () => {
   };
   
   const handleIsAuth = (isReview) => {
-    console.log("isAuth: ",isAuthenticated)
     if(!isAuthenticated){
-      navigate("/login");
+      const result = confirm("로그인이 필요한 기능입니다. 로그인 하시겠습니까?");
+      if (result){
+        navigate("/login");
+      }
     } else {
       setIsReview(!isReview)
     }
