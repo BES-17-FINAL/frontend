@@ -8,10 +8,12 @@ import SpotDetail from "./pages/spotDetail";
 import OAuthCallback from "./pages/OAuthCallback";
 import Community from "./pages/community";
 import AreaBasedListPage from "./pages/area_based_list_page";
-import { UserProfile } from "./pages/profile"
 import FestivalListPage from "./pages/FestivalListPage";
-import useAuthStore from "./store/authStore";
 import SearchResults from "./pages/SearchResults";
+
+
+import { UserProfile } from "./pages/profile"
+import useAuthStore from "./store/authStore";
 const App = () => {
   const { isAuthenticated } = useAuthStore();
 
@@ -43,9 +45,20 @@ const App = () => {
         <Route path="/oauth/callback" element={<OAuthCallback />} />
         <Route path="/search" element={<SearchResults />}/>
         <Route path="/profile" element={isAuthenticated ?<UserProfile /> : <Navigate to="login" />} />
-        <Route path="/community" element={isAuthenticated ?<Community /> : <Navigate to="login" />} />
-        <Route path="/explore" element={<AreaBasedListPage />}/>
-        <Route path="/festivals" element={<FestivalListPage />}/>
+      
+        {/* 커뮤니티 */}
+        <Route path="/community" element={<Community />} />
+
+        {/* 검색 결과 */}
+        <Route path="/search" element={<SearchResults />} />
+
+        {/* 지역 기반 관광 리스트 페이지 */}
+        <Route path="/explore" element={<AreaBasedListPage />} />
+
+        {/* 지역 축제 관광 리스트 페이지 */}
+        <Route path="/festivals" element={<FestivalListPage />} />
+
+
       </Routes>
     </BrowserRouter>
   );
