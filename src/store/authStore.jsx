@@ -8,7 +8,7 @@ const useAuthStore = create((set) => ({
   error: null,
 
   // -------------------- LOCAL 로그인 --------------------
-  login: async (userData) => {
+    login: async (userData) => {
     set({ loading: true, error: null });
     try {
       const data = await authService.login(userData);
