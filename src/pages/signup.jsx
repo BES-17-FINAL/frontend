@@ -60,7 +60,7 @@ function Signup() {
         />
         <input
           type="text"
-          name="username"
+          name="userName"
           placeholder="userName"
           value={form.name}
           onChange={handleChange}

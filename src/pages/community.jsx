@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import CommunityList from '../components/community/CommunityList';
 import { CommunityDetail } from '../components/community/CommunityDetail';
 import { PostWriteModal } from '../components/community/PostWriteModal';
+import Header from "../components/layout/Header";
 
 const Community = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -52,15 +53,7 @@ const Community = () => {
   return (
     <div className="bg-white min-h-screen">
       {/* Header */}
-      <header className="py-4 px-8">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-r from-indigo-500 to-sky-400 flex items-center justify-center text-white font-bold text-lg">TH</div>
-          <div>
-            <h1 className="text-lg font-semibold">Travel Hub</h1>
-            <p className="text-xs text-gray-500">지역별 관광정보 한눈에</p>
-          </div>
-        </div>
-      </header>
+      <Header/>
 
       {/* Main Content */}
       {selectedPost === null ? (
