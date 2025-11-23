@@ -29,6 +29,17 @@ const useUserStore = create((set) => ({
             set({ error: error.message, loading: false });
             return null;
         }
+    },
+    imageUpdate: async (data) => {
+        set({ loading: true, error: null });
+        try {
+            const response = await userService.imageUpdate(data)
+            set({ user: response.data, loading: false})
+            return response.data
+        } catch (error) {
+            set({ error: error.message, loading: false });
+            return null;
+        }
     }
 }))
 

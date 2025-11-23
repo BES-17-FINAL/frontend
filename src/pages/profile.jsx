@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../components/layout/Header';
 
 export function UserProfile() {
-  const { getUser, editUser } = useUserStore();
+  const { getUser, editUser, imageUpdate } = useUserStore();
   const { getUserPost } = usePostStore();
   const { getMyReviews } = useReviewStore();
   const [profile, setProfile] = useState([]);
@@ -23,7 +23,7 @@ export function UserProfile() {
   const [posts, setPosts] = useState([]);
   const [reviews, setReviews] = useState([]);
 
-  const handleImageUpload = (e) => {
+  const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
@@ -31,6 +31,15 @@ export function UserProfile() {
         setProfileImage(reader.result);
       };
       reader.readAsDataURL(file);
+
+      const formData = new FormData();
+      formData.append("image", file); // 🔥 백엔드 @RequestPart("image") 와 일치
+      for (const [key, value] of formData.entries()) {
+        console.log(key, value);
+      }
+      // 업로드 요청
+      const result = await imageUpdate(formData);
+      console.log("업로드 결과:", result);
     }
   };
 
@@ -58,7 +67,6 @@ export function UserProfile() {
             const data = await getUser();
             const postData = await getUserPost();
             const reviewData = await getMyReviews();
-            console.log("posts: ", postData)
             setProfile(data);
             setPosts(postData);
             setReviews(reviewData);
