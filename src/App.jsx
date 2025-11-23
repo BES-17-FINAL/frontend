@@ -43,6 +43,13 @@ const App = () => {
         {/* OAuth 콜백 */}
         <Route path="/oauth/callback" element={<OAuthCallback />} />
 
+        {/* Community */}
+        <Route path="/community" element={<Community />} />
+
+        {/* 기타 페이지 */}
+        <Route path="/explore" element={<AreaBasedListPage />} />
+        <Route path="/festivals" element={<FestivalListPage />} />
+
         <Route path="/profile" element={isAuthenticated ?<UserProfile /> : <Navigate to="login" />} />
       </Routes>
     </BrowserRouter>

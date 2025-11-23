@@ -3,9 +3,9 @@ import { Bookmark, Image as ImageIcon, Edit2, Trash2 } from 'lucide-react';
 import { useMemo, useState, useEffect, useRef } from 'react';
 import useAuthStore from '../../store/authStore';
 import { PostWriteModal } from './PostWriteModal';
-import api from '../../services/api';
+import api, { getImageUrl } from '../../services/api';
 
-export function CommunityDetail({ post, onBack, onPostUpdated }) {
+export function CommunityDetail({ post, onBack, onPostUpdated, onViewCountUpdated, onViewCountIncremented }) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   if (!post) {
@@ -35,6 +35,7 @@ export function CommunityDetail({ post, onBack, onPostUpdated }) {
   const [isLiked, setIsLiked] = useState(post.isLiked || false);
   const [likeCount, setLikeCount] = useState(post.likes || 0);
   const [viewCount, setViewCount] = useState(post.views || 0);
+  const [isBookmarked, setIsBookmarked] = useState(post.isBookmarked || false);
 
   // 댓글 상태 관리
   const [comments, setComments] = useState([]);
@@ -93,8 +94,44 @@ export function CommunityDetail({ post, onBack, onPostUpdated }) {
       localStorage.setItem(storageKey, 'true');
       viewCountIncrementedRef.current.add(postId);
       
-      await api.post(`/api/posts/${postId}/view`);
-      console.log('조회수 증가 성공:', postId);
+      // 조회수 증가 API 호출 (응답에 증가된 조회수 포함)
+      console.log('🔵 [조회수 증가] API 호출 시작, postId:', postId);
+      const viewResponse = await api.post(`/api/posts/${postId}/view`);
+      console.log('🟢 [조회수 증가] API 응답:', viewResponse.data);
+      
+      const newViewCount = viewResponse.data?.viewCount;
+      console.log('🟢 [조회수 증가] 추출된 조회수:', newViewCount);
+      
+      if (newViewCount !== undefined && newViewCount !== null) {
+        // API 응답에서 받은 조회수로 즉시 업데이트
+        setViewCount(newViewCount);
+        console.log('🟢 [조회수 증가] 상태 업데이트 완료:', newViewCount);
+        
+        // 부모 컴포넌트에 조회수 업데이트 알림
+        if (onViewCountUpdated) {
+          console.log('🟢 [조회수 증가] onViewCountUpdated 호출:', newViewCount);
+          onViewCountUpdated(newViewCount);
+        }
+        // 조회수 증가 완료 알림 (목록 새로고침용)
+        if (onViewCountIncremented) {
+          console.log('🟢 [조회수 증가] onViewCountIncremented 호출:', postId, newViewCount);
+          onViewCountIncremented(postId, newViewCount);
+        }
+      } else {
+        console.warn('⚠️ [조회수 증가] 응답에 조회수가 없음, 상세 정보 재조회');
+        // 응답에 조회수가 없으면 상세 정보를 다시 가져오기
+        const detailResponse = await api.get(`/api/posts/${postId}/data`);
+        const updatedPost = detailResponse.data;
+        if (updatedPost && updatedPost.viewCount !== undefined) {
+          setViewCount(updatedPost.viewCount);
+          if (onViewCountUpdated) {
+            onViewCountUpdated(updatedPost.viewCount);
+          }
+          if (onViewCountIncremented) {
+            onViewCountIncremented(postId, updatedPost.viewCount);
+          }
+        }
+      }
     } catch (error) {
       // AbortError는 무시 (요청 취소)
       if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
@@ -123,9 +160,24 @@ export function CommunityDetail({ post, onBack, onPostUpdated }) {
       console.log('🟢 [게시글 상세] liked:', updatedPost.liked, '타입:', typeof updatedPost.liked);
       console.log('🟢 [게시글 상세] likeCount:', updatedPost.likeCount);
       console.log('🟢 [게시글 상세] 전체 키:', Object.keys(updatedPost));
+      // 이미지 디버깅
+      console.log('🖼️ [게시글 상세] 이미지 정보:', {
+        images: updatedPost.images,
+        imagesType: typeof updatedPost.images,
+        imagesIsArray: Array.isArray(updatedPost.images),
+        imagesLength: updatedPost.images?.length,
+        thumbnailUrl: updatedPost.thumbnailUrl
+      });
       
-      // 조회수 업데이트
-      setViewCount(updatedPost.viewCount || 0);
+      // 조회수 업데이트 (백엔드에서 받은 최신 값 사용)
+      const latestViewCount = updatedPost.viewCount || 0;
+      setViewCount(latestViewCount);
+      console.log('🟢 [게시글 상세] 조회수 업데이트:', latestViewCount);
+      
+      // 부모 컴포넌트에도 조회수 업데이트 알림 (최신 값 반영)
+      if (onViewCountUpdated && latestViewCount !== viewCount) {
+        onViewCountUpdated(latestViewCount);
+      }
       // 좋아요 상태 업데이트 (백엔드에서 받은 값으로 덮어쓰기)
       // Jackson이 isLiked를 liked로 직렬화할 수 있으므로 둘 다 확인
       const newIsLiked = updatedPost.isLiked === true || 
@@ -135,6 +187,13 @@ export function CommunityDetail({ post, onBack, onPostUpdated }) {
       console.log('🟢 [게시글 상세] 변환된 isLiked:', newIsLiked);
       setIsLiked(!!newIsLiked); // 명시적으로 boolean으로 변환
       setLikeCount(updatedPost.likeCount || 0);
+      
+      // 북마크 상태 업데이트
+      const newIsBookmarked = updatedPost.isBookmarked === true || 
+                             updatedPost.bookmarked === true || 
+                             updatedPost.isBookmarked === 'true' || 
+                             updatedPost.bookmarked === 'true';
+      setIsBookmarked(!!newIsBookmarked);
       
       // 전체 postData 업데이트
       setPostData(updatedPost);
@@ -230,6 +289,46 @@ export function CommunityDetail({ post, onBack, onPostUpdated }) {
                           error.message || 
                           '알 수 없는 오류';
       alert(`좋아요 처리에 실패했습니다.\n\n에러: ${errorMessage}`);
+    }
+  };
+
+  // 게시글 북마크 토글 함수
+  const handleBookmarkClick = async () => {
+    if (!post?.id) return;
+    
+    // 로그인 확인
+    if (!isAuthenticated) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+    
+    // 낙관적 업데이트 (즉시 UI 업데이트)
+    const previousBookmarked = isBookmarked;
+    setIsBookmarked(!previousBookmarked);
+    
+    try {
+      console.log('🔵 [북마크] API 호출 시작, postId:', post.id);
+      // 백엔드 API 호출
+      const response = await api.post(`/api/posts/${post.id}/bookmark`);
+      console.log('🟢 [북마크] API 호출 성공:', response);
+      
+      // 성공 시 최신 데이터로 업데이트
+      await fetchPostDetail();
+      console.log('🟢 [북마크] 데이터 업데이트 완료');
+    } catch (error) {
+      console.error('❌ [북마크] 토글 실패:', error);
+      console.error('❌ [북마크] 에러 응답:', error.response?.data);
+      console.error('❌ [북마크] 에러 상태:', error.response?.status);
+      console.error('❌ [북마크] 에러 메시지:', error.message);
+      
+      // 실패 시 이전 상태로 복구
+      setIsBookmarked(previousBookmarked);
+      
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.error || 
+                          error.message || 
+                          '알 수 없는 오류';
+      alert(`북마크 처리에 실패했습니다.\n\n에러: ${errorMessage}`);
     }
   };
 
@@ -512,18 +611,45 @@ export function CommunityDetail({ post, onBack, onPostUpdated }) {
     await handleCommentDelete(replyId);
   };
 
+  // 카테고리 Enum → 한글 변환
+  const categoryToKorean = (category) => {
+    const map = {
+      'CHAT': '잡담',
+      'QUESTION': '질문',
+      'TIP': '꿀팁'
+    };
+    return map[category] || category || '잡담';
+  };
+
   // getImagesFromPost 함수 정의
   const getImagesFromPost = (sourcePost = post) => {
     if (sourcePost.images && Array.isArray(sourcePost.images) && sourcePost.images.length > 0) {
       // PostImageResponse 배열인 경우
-      return sourcePost.images.map(img => {
-        if (typeof img === 'string') return img;
-        return img.imageUrl || img.url || img;
-      }).filter(Boolean); // null/undefined 제거
+      return sourcePost.images
+        .map(img => {
+          const url = typeof img === 'string' ? img : (img?.imageUrl || img?.url || img);
+          if (!url || typeof url !== 'string' || url.trim() === '' || url.trim().toLowerCase() === 'null') {
+            return null;
+          }
+          // getImageUrl을 사용하여 URL 변환
+          try {
+            return getImageUrl(url);
+          } catch (error) {
+            console.warn('이미지 URL 변환 실패:', url, error);
+            return null;
+          }
+        })
+        .filter(Boolean); // null/undefined 제거
     }
     // thumbnailUrl이 있는 경우
     if (sourcePost.thumbnailUrl) {
-      return [sourcePost.thumbnailUrl];
+      try {
+        const thumbUrl = getImageUrl(sourcePost.thumbnailUrl);
+        return thumbUrl ? [thumbUrl] : [];
+      } catch (error) {
+        console.warn('썸네일 URL 변환 실패:', sourcePost.thumbnailUrl, error);
+        return [];
+      }
     }
     return [];
   };
@@ -531,6 +657,7 @@ export function CommunityDetail({ post, onBack, onPostUpdated }) {
   // postData 계산 (postData state가 있으면 우선 사용, 없으면 post prop 사용)
   const displayPostData = useMemo(() => {
     const source = postData || post;
+    const categoryValue = source.category || 'CHAT';
     return {
       id: source.id,
       title: source.title || source.content || '제목 없음',
@@ -541,11 +668,20 @@ export function CommunityDetail({ post, onBack, onPostUpdated }) {
       date: formatDate(source.createdAt),
       likes: likeCount, // 상태에서 가져오기
       views: viewCount, // 상태에서 가져오기
-      category: source.category || '잡담',
+      category: categoryToKorean(categoryValue), // 한글로 변환
+      categoryEnum: categoryValue, // 원본 Enum 값도 저장 (색상용)
       images: getImagesFromPost(source),
       content: source.fullContent || source.content || '',
     };
   }, [postData, post, likeCount, viewCount]);
+
+  // 디버깅: displayPostData 변경 시 이미지 정보 출력
+  useEffect(() => {
+    console.log('🖼️ [CommunityDetail] displayPostData.images:', displayPostData.images);
+    console.log('🖼️ [CommunityDetail] displayPostData.images.length:', displayPostData.images?.length);
+    console.log('🖼️ [CommunityDetail] postData:', postData);
+    console.log('🖼️ [CommunityDetail] post:', post);
+  }, [displayPostData.images, postData, post]);
 
   // 디버깅: 현재 상태 확인
   useEffect(() => {
@@ -567,9 +703,15 @@ export function CommunityDetail({ post, onBack, onPostUpdated }) {
 
 
   const getCategoryColor = (category) => {
-    switch (category) {
+    // category가 한글이면 Enum으로 변환
+    const categoryEnum = displayPostData.categoryEnum || category;
+    
+    switch (categoryEnum) {
+      case 'CHAT':
       case '잡담': return 'bg-[#adf382] text-black';
-      case '질문': return 'bg-[#4442dd] text-white';
+      case 'QUESTION':
+      case '질문': return 'bg-yellow-400 text-black';
+      case 'TIP':
       case '꿀팁': return 'bg-[#ff6b6b] text-white';
       default: return 'bg-[#dedede] text-black';
     }
@@ -649,12 +791,15 @@ export function CommunityDetail({ post, onBack, onPostUpdated }) {
           <span className="text-[#666]">{displayPostData.date}</span>
           <span className="text-[#666]">조회 {displayPostData.views}</span>
           <div className="ml-auto flex items-center gap-4">
-            <button className="flex items-center gap-2 hover:text-[#4442dd] transition-colors">
-              <Heart className="w-5 h-5 text-[#666]" />
-              <span className="text-[#666]">{displayPostData.likes}</span>
-            </button>
-            <button className="hover:text-[#4442dd] transition-colors">
-              <Bookmark className="w-5 h-5 text-[#666]" />
+            <button 
+              onClick={handleBookmarkClick}
+              className="hover:text-[#4442dd] transition-colors"
+            >
+              <Bookmark 
+                className={`w-5 h-5 transition-colors ${
+                  isBookmarked ? 'fill-[#4442dd] text-[#4442dd]' : 'fill-none text-[#666]'
+                }`}
+              />
             </button>
           </div>
         </div>
@@ -662,19 +807,28 @@ export function CommunityDetail({ post, onBack, onPostUpdated }) {
         {/* 이미지 */}
         {displayPostData.images && displayPostData.images.length > 0 && (
           <div className="mb-6 space-y-4">
-            {displayPostData.images.map((img, idx) => (
-              <img
-                key={idx}
-                src={img}
-                alt={`게시글 이미지 ${idx + 1}`}
-                className="w-full rounded-lg"
-                style={{ maxHeight: '600px', objectFit: 'contain' }}
-                onError={(e) => {
-                  console.error('이미지 로드 실패:', img);
-                  e.target.style.display = 'none';
-                }}
-              />
-            ))}
+            {displayPostData.images.map((img, idx) => {
+              // 이미지 URL이 유효한지 확인
+              if (!img || typeof img !== 'string' || img.trim() === '') {
+                return null;
+              }
+              return (
+                <img
+                  key={idx}
+                  src={img}
+                  alt={`게시글 이미지 ${idx + 1}`}
+                  className="w-full rounded-lg"
+                  style={{ maxHeight: '600px', objectFit: 'contain' }}
+                  onError={(e) => {
+                    console.warn('이미지 로드 실패:', img);
+                    e.target.style.display = 'none';
+                  }}
+                  onLoad={() => {
+                    console.log('✅ 이미지 로드 성공:', img);
+                  }}
+                />
+              );
+            })}
           </div>
         )}
 

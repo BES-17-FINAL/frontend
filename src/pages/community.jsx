@@ -11,6 +11,7 @@ const Community = () => {
   const [selectedPost, setSelectedPost] = useState(null);
   const [isWriteModalOpen, setIsWriteModalOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [updatedViewCounts, setUpdatedViewCounts] = useState({}); // 게시글 ID별 업데이트된 조회수
 
   // 게시글 작성 완료 후 목록 새로고침
   const handlePostCreated = () => {
@@ -46,7 +47,10 @@ const Community = () => {
     // URL에서 postId 제거 (목록으로)
     setSearchParams({});
     setSelectedPost(null);
-    setRefreshTrigger(prev => prev + 1);
+    // 조회수 업데이트가 완료될 시간을 주기 위해 약간의 지연 후 새로고침
+    setTimeout(() => {
+      setRefreshTrigger(prev => prev + 1);
+    }, 200);
   };
 
   return (
@@ -68,11 +72,40 @@ const Community = () => {
           onPostClick={handlePostClick}
           onWriteClick={() => setIsWriteModalOpen(true)}
           refreshTrigger={refreshTrigger}
+          updatedViewCounts={updatedViewCounts}
         />
       ) : (
         <CommunityDetail 
           post={selectedPost} 
           onBack={handleBack}
+          onViewCountUpdated={(newViewCount) => {
+            // 조회수 업데이트 시 selectedPost의 조회수도 업데이트
+            if (selectedPost) {
+              console.log('🟢 [조회수 업데이트] onViewCountUpdated 호출됨, postId:', selectedPost.id, 'newViewCount:', newViewCount);
+              setSelectedPost(prev => prev ? { ...prev, views: newViewCount } : null);
+              // 목록에서도 해당 게시글의 조회수를 업데이트하기 위해 저장
+              setUpdatedViewCounts(prev => {
+                const updated = {
+                  ...prev,
+                  [selectedPost.id]: newViewCount
+                };
+                console.log('🟢 [조회수 업데이트] updatedViewCounts 업데이트:', updated);
+                return updated;
+              });
+            }
+          }}
+          onViewCountIncremented={(postId, newViewCount) => {
+            // 조회수 증가 완료 시 목록의 조회수도 업데이트
+            console.log('🟢 [조회수 증가 완료] onViewCountIncremented 호출됨, postId:', postId, 'newViewCount:', newViewCount);
+            setUpdatedViewCounts(prev => {
+              const updated = {
+                ...prev,
+                [postId]: newViewCount
+              };
+              console.log('🟢 [조회수 증가 완료] updatedViewCounts 업데이트:', updated);
+              return updated;
+            });
+          }}
           onPostUpdated={(updatedPost) => {
             // 수정된 게시글로 selectedPost 업데이트
             console.log('🟢 [Community] 게시글 수정 완료, selectedPost 업데이트:', updatedPost);
