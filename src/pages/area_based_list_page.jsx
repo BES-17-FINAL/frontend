@@ -1,15 +1,25 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect} from "react";
+import { useLocation } from "react-router-dom";
 import Header from "../components/layout/Header";
 
 function AreaBasedListPage() {
+
+    // {지역} 자세히보기 초기값 설정
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const initialArea = params.get("areaCode") || "1";
+
+  
   const [places, setPlaces] = useState([]);
-  const [areaCode, setAreaCode] = useState("1");
+  const [areaCode, setAreaCode] = useState(initialArea);
   const [contentTypeId, setContentTypeId] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [pageNo, setPageNo] = useState(1); // ⭐ 페이지 상태 추가
   const [totalCount, setTotalCount] = useState(0);
 
+
+  
   // API 호출 함수
   const fetchPlaces = async (area, contentType, page) => {
     setLoading(true);
@@ -51,7 +61,7 @@ function AreaBasedListPage() {
   const totalPages = Math.ceil(totalCount / 12);
 
   return (
-    <div className="bg-sky-200 min-h-screen font-sans">
+    <div className="min-h-screen font-sans bg-gradient-to-b from-sky-200 to-blue-100">
       <Header />
 
       <div className="max-w-6xl mx-auto px-6 py-6">
@@ -67,7 +77,7 @@ function AreaBasedListPage() {
                 setAreaCode(e.target.value);
                 setPageNo(1); // 지역 바꾸면 첫 페이지로
               }}
-              className="p-2 border rounded-md"
+              className="p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400"
             >
               <option value="1">서울</option>
               <option value="2">인천</option>
@@ -91,24 +101,24 @@ function AreaBasedListPage() {
 
           {/* 콘텐츠 타입 */}
           <div className="flex items-center gap-2">
-            <label className="font-semibold">콘텐츠:</label>
+            <label className="font-semibold text-gray-700">콘텐츠:</label>
             <select
               value={contentTypeId}
               onChange={(e) => {
                 setContentTypeId(e.target.value);
                 setPageNo(1);
               }}
-              className="p-2 border rounded-md"
+              className="p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400"
             >
-              <option value="">전체</option>
-              <option value="12">관광지</option>
-              <option value="14">문화시설</option>
-              <option value="15">축제/행사</option>
-              <option value="25">여행코스</option>
-              <option value="28">레포츠</option>
-              <option value="32">숙박</option>
-              <option value="38">쇼핑</option>
-              <option value="39">음식점</option>
+              <option value="">전체 🌐</option>
+              <option value="12">관광지 ✈️</option>
+              <option value="14">문화시설 🎭</option>
+              <option value="15">축제/행사 🎉</option>
+              <option value="25">여행코스 🗺️</option>
+              <option value="28">레포츠 🏄‍♂️</option>
+              <option value="32">숙박 🛏️</option>
+              <option value="38">쇼핑 🛍️</option>
+              <option value="39">음식점 🍽️</option>
             </select>
           </div>
         </div>
@@ -120,30 +130,35 @@ function AreaBasedListPage() {
         {/* 관광지 리스트 */}
         {!loading && !error && places.length > 0 && (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-              {places.map((item) => (
-                <div
-                  key={item.contentid}
-                  className="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-xl transition"
-                >
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {places.map((item) => (
+              <div
+                key={item.contentid}
+                className="bg-white rounded-xl shadow-lg overflow-hidden transform transition hover:-translate-y-2 hover:shadow-2xl"
+              >
+                <div className="relative">
                   {item.firstimage ? (
                     <img
                       src={item.firstimage}
                       alt={item.title}
-                      className="w-full h-48 object-cover"
+                      className="w-full h-52 object-cover"
                     />
                   ) : (
-                    <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
+                    <div className="w-full h-52 bg-gray-200 flex items-center justify-center text-gray-400">
                       이미지 없음
                     </div>
                   )}
-                  <div className="p-4">
-                    <h2 className="text-lg font-bold mb-2">{item.title}</h2>
-                    <p className="text-gray-600">{item.addr1 || "주소 정보 없음"}</p>
+                  <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/70 to-transparent p-3">
+                    <h2 className="text-white text-lg font-bold">{item.title}</h2>
                   </div>
                 </div>
-              ))}
-            </div>
+                <div className="p-4">
+                  <p className="text-gray-600">{item.addr1 || "주소 정보 없음"}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
 
             {/* 페이지 네비게이션 */}
             <div className="flex justify-center items-center gap-4 mt-8">

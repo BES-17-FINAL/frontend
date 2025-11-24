@@ -49,17 +49,4 @@ export const getImageUrl = (imageUrl) => {
   }
   
   // 이미 완전한 URL인 경우 (http:// 또는 https://로 시작)
-  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-    return imageUrl;
-  }
-  
-  // 상대 경로인 경우 (예: /images/xxx.jpg)
-  if (imageUrl.startsWith('/')) {
-    return `${IMAGE_API_URL}${imageUrl}`;
-  }
-  
-  // 그 외의 경우
-  return `${IMAGE_API_URL}/images/${imageUrl}`;
-};
-
-export default api;
+  if (imageUrl.startsWith('http://') ||

@@ -4,13 +4,16 @@ import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import useUserStore from '../store/userStore';
 import usePostStore from '../store/postStore';
 import useReviewStore from '../store/reviewStore';
+import { useNavigate } from 'react-router-dom';
+import Header from '../components/layout/Header';
 
 export function UserProfile() {
   const { getUser, editUser } = useUserStore();
   const { getUserPost } = usePostStore();
   const { getMyReviews } = useReviewStore();
-
   const [profile, setProfile] = useState([]);
+
+  const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState('reviews'); // reviews, posts, comments
   const [profileImage, setProfileImage] = useState("");
@@ -176,9 +179,11 @@ export function UserProfile() {
 
   return (
     <div className="max-w-[1000px] mx-auto px-6 py-8">
+      <Header />
+      
       {/* 뒤로가기 버튼 */}
       <button
-        onClick={() => {}}
+        onClick={() => {navigate(-1)}}
         className="mb-6 px-6 py-2 border-2 border-[#dedede] text-black hover:border-[#4442dd] rounded-lg transition-colors"
       >
         ← 뒤로가기

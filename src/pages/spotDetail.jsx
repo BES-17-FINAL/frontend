@@ -3,10 +3,9 @@ import { Star, MapPin, Clock, Phone, Globe } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import useSpotStore from "../store/spotStore";
 import useReviewStore from "../store/reviewStore";
-import spotService from "../services/spot";
+import useAuthStore from "../store/authStore";
 import axios from "axios";
 import Header from "../components/layout/Header";
-import { ReviewWriteModal } from "../components/review/ReviewWriteModal";
 
 const KAKAO_MAP_KEY = import.meta.env.VITE_KAKAO_MAP_KEY;
 
@@ -17,6 +16,7 @@ const SpotDetail = () => {
   const spotId = queryParams.get("spotId");
 
   const { getSpot } = useSpotStore();
+  const { isAuthenticated } = useAuthStore();
   const { getReviews, getAverageRating, addReview } = useReviewStore();
 
   const [spot, setSpot] = useState(null);
@@ -39,7 +39,6 @@ const SpotDetail = () => {
       minute: "2-digit",
     });
   };
-
   // Spot, 리뷰, 주변 숙박업소 한번에 fetch
   useEffect(() => {
     const fetchData = async () => {
@@ -90,6 +89,17 @@ const SpotDetail = () => {
     setUserRating(0);
     setComment("");
   };
+  
+  const handleIsAuth = (isReview) => {
+    if(!isAuthenticated){
+      const result = confirm("로그인이 필요한 기능입니다. 로그인 하시겠습니까?");
+      if (result){
+        navigate("/login");
+      }
+    } else {
+      setIsReview(!isReview)
+    }
+  }
 
   if (!spot) return <p className="text-center mt-10">Loading...</p>;
 
@@ -183,7 +193,7 @@ const SpotDetail = () => {
             <h3 className="text-[24px] text-black">리뷰</h3>
             <button
               className="px-6 py-2 bg-[#4442dd] text-white rounded-lg hover:bg-[#3331cc] transition-colors"
-              onClick={() => setIsReview(!isReview)}
+              onClick={() => handleIsAuth(isReview)}
             >
               리뷰 작성
             </button>

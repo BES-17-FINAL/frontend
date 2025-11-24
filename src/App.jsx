@@ -8,9 +8,9 @@ import SpotDetail from "./pages/spotDetail";
 import OAuthCallback from "./pages/OAuthCallback";
 import Community from "./pages/community";
 import AreaBasedListPage from "./pages/area_based_list_page";
-import { UserProfile } from "./pages/profile"
 import FestivalListPage from "./pages/FestivalListPage";
-
+import SearchResults from "./pages/SearchResults";
+import { UserProfile } from "./pages/profile";
 import useAuthStore from "./store/authStore";
 
 const App = () => {
@@ -23,7 +23,6 @@ const App = () => {
   return (
     <BrowserRouter>
       <Routes>
-
         {/* 메인 */}
         <Route path="/" element={<TravelHubHome />} />
 
@@ -43,14 +42,24 @@ const App = () => {
         {/* OAuth 콜백 */}
         <Route path="/oauth/callback" element={<OAuthCallback />} />
 
-        {/* Community */}
+        {/* 프로필 (로그인 시 접근 가능) */}
+        <Route 
+          path="/profile" 
+          element={isAuthenticated ? <UserProfile /> : <Navigate to="/login" />} 
+        />
+       
+        {/* 커뮤니티 */}
         <Route path="/community" element={<Community />} />
 
-        {/* 기타 페이지 */}
+        {/* 검색 결과 */}
+        <Route path="/search" element={<SearchResults />} />
+
+        {/* 지역 기반 관광 리스트 페이지 */}
         <Route path="/explore" element={<AreaBasedListPage />} />
+
+        {/* 지역 축제 관광 리스트 페이지 */}
         <Route path="/festivals" element={<FestivalListPage />} />
 
-        <Route path="/profile" element={isAuthenticated ?<UserProfile /> : <Navigate to="login" />} />
       </Routes>
     </BrowserRouter>
   );
