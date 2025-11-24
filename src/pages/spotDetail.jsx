@@ -106,7 +106,14 @@ const SpotDetail = () => {
   return (
     <div className="bg-white min-h-screen">
       <Header />
+      
       <div className="max-w-[1200px] mx-auto px-8 py-12">
+        <button
+        onClick={handleBack}
+        className="mb-6 px-6 py-2 border-2 border-[#dedede] text-black hover:border-[#4442dd] rounded-lg transition-colors"
+      >
+        ← 뒤로가기
+      </button>
         {/* Spot Title & Rating */}
         <div className="mb-12">
           <h2 className="text-[36px] text-black mb-3">{spot.title}</h2>

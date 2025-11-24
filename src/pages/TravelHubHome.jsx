@@ -80,9 +80,17 @@ export default function TravelHubHome() {
               <SearchBar onSearch={handleSearch} />
             </div>
           </div>
-
-          {/* 추천 지역 */}
           <div className="mt-6 md:mt-0 md:w-1/3">
+            <p className="font-semibold mb-4">커뮤니티에서 여행 이야기 나누기</p>
+            <button
+              onClick={() => navigate("/community")}
+              className="w-full px-4 py-3 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 transition mt-5"
+            >
+              커뮤니티
+            </button>
+          </div>
+          {/* 추천 지역 */}
+          {/* <div className="mt-6 md:mt-0 md:w-1/3">
             <div className="rounded-xl bg-gradient-to-tr from-indigo-50 to-sky-50 p-4 h-full flex flex-col justify-center">
               <h3 className="font-semibold">오늘의 추천 지역</h3>
               <ul className="mt-3 grid grid-cols-2 gap-2">
@@ -100,7 +108,7 @@ export default function TravelHubHome() {
                 </li>
               </ul>
             </div>
-          </div>
+          </div> */}
         </section>
 
         {/* Grid: 인기 지역 */}
