@@ -6,6 +6,7 @@ import Signup from "./pages/signup";
 import Login from "./pages/login";
 import SpotDetail from "./pages/spotDetail";
 import OAuthCallback from "./pages/OAuthCallback";
+import UserProfile from "./pages/profile";
 import Community from "./pages/community";
 import AreaBasedListPage from "./pages/area_based_list_page";
 import FestivalListPage from "./pages/FestivalListPage";
@@ -45,6 +46,13 @@ const App = () => {
         <Route path="/profile" element={isAuthenticated ?<UserProfile /> : <Navigate to="login" />} />
         {/* 비밀번호 변경*/}
         <Route path="/change-password" element={<ChangePassword />} />
+        {/* 커뮤니티 */}
+        <Route path="/community" element={<Community />} />
+
+        {/* 지역 기반 관광지 목록 */}
+        <Route path="/explore" element={<AreaBasedListPage />} />
+        {/* 축제 목록 */}
+        <Route path="/festivals" element={<FestivalListPage />} />
       </Routes>
     </BrowserRouter>
   );

@@ -1,9 +1,10 @@
 // src/components/festival/festivalList.jsx
-
+import { useNavigate } from "react-router-dom";
 import { useRef, useEffect } from "react";
 
 const FestivalList = ({ festivals, loading, error }) => {
   const containerRef = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const container = containerRef.current;
@@ -46,6 +47,12 @@ const FestivalList = ({ festivals, loading, error }) => {
     return `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`;
   };
 
+    const handleSpotClick = (spot) => {
+    // 스팟 클릭 시 동작 (예: 상세 페이지로 이동)
+    navigate(`/spotDetail?spotId=${spot.id}`);
+    
+  }
+  
   return (
     <div
       ref={containerRef}
@@ -55,6 +62,7 @@ const FestivalList = ({ festivals, loading, error }) => {
         <div
           key={festival.id}
           className="w-[220px] h-[220px] m-4 bg-white rounded-lg shadow-md p-4 snap-start flex-shrink-0"
+          onClick={() => handleSpotClick(festival)}
         >
           <div className="h-24 bg-gray-200 rounded-md mb-3 flex items-center justify-center overflow-hidden">
             {festival.firstImage ? (
