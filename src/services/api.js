@@ -1,6 +1,6 @@
 import axios from "axios";
 import StorageService from "./storage";
-const API_URL = import.meta.env.VITE_API_URL || "http://54.180.91.172:8080";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 // Community 이미지용 서버 URL (환경변수가 없으면 API_URL과 동일하게 사용)
 const IMAGE_API_URL = import.meta.env.VITE_IMAGE_API_URL || API_URL;
 
