@@ -7,6 +7,9 @@ const userService = {
     editUser(data) {
         console.log("userservice", data);
         return api.put("/api/user/edit", data)
+    },
+    imageUpdate(data) {
+        api.put("/api/user/image", data, { headers: { "Content-Type": undefined } })
     }
 }
 
