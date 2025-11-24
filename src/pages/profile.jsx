@@ -4,8 +4,7 @@ import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import useUserStore from '../store/userStore';
 import usePostStore from '../store/postStore';
 import useReviewStore from '../store/reviewStore';
-import { useNavigate } from 'react-router-dom';
-import Header from '../components/layout/Header';
+import { Link } from "react-router-dom";
 
 export function UserProfile() {
   const { getUser, editUser, imageUpdate } = useUserStore();
@@ -225,6 +224,7 @@ export function UserProfile() {
               className="hidden"
             />
           </div>
+          
 
           {/* 유저 정보 */}
           <div className="flex-1 min-h-[140px] flex flex-col justify-between mt-8">
@@ -263,6 +263,16 @@ export function UserProfile() {
             </div>
           </div>
         </div>
+      </div>
+
+            {/* 비밀번호 변경 링크 추가 */}
+      <div className="mb-6">
+        <Link
+          to="/change-password"
+          className="text-blue-500 hover:underline"
+        >
+          비밀번호 변경하기
+        </Link>
       </div>
 
       {/* 탭 메뉴 */}
