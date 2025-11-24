@@ -1,7 +1,8 @@
 import axios from "axios";
 import StorageService from "./storage";
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+const API_URL = import.meta.env.VITE_API_URL || "http://54.180.91.172:8080";
+// Community 이미지용 서버 URL (환경변수가 없으면 API_URL과 동일하게 사용)
+const IMAGE_API_URL = import.meta.env.VITE_IMAGE_API_URL || API_URL;
 
 const api = axios.create({
   baseURL: API_URL,
@@ -16,6 +17,13 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // FormData를 전송할 때는 Content-Type 헤더를 제거
+    // (브라우저가 자동으로 multipart/form-data와 boundary를 설정)
+    if (config.data instanceof FormData) {
+      delete config.headers["Content-Type"];
+    }
+
     console.log("Request Config:", config);
     return config;
   },
@@ -38,19 +46,19 @@ export const getImageUrl = (imageUrl) => {
   if (!imageUrl) {
     return null;
   }
-  
+
   // 이미 완전한 URL인 경우 (http:// 또는 https://로 시작)
-  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+  if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
     return imageUrl;
   }
-  
+
   // 상대 경로인 경우 (예: /images/xxx.jpg)
-  if (imageUrl.startsWith('/')) {
-    return `${API_URL}${imageUrl}`;
+  if (imageUrl.startsWith("/")) {
+    return `${IMAGE_API_URL}${imageUrl}`;
   }
-  
+
   // 그 외의 경우
-  return `${API_URL}/images/${imageUrl}`;
+  return `${IMAGE_API_URL}/images/${imageUrl}`;
 };
 
 export default api;

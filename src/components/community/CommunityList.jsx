@@ -124,94 +124,53 @@ const CommunityList = ({
       const response = await api.get("/api/posts", { params });
 
       console.log("🟢 [API 응답] 상태 코드:", response.status);
-      console.log("🟢 [API 응답] 전체 응답:", response);
-      console.log("🟢 [API 응답] response.data:", response.data);
-      console.log("🟢 [API 응답] response.data 타입:", typeof response.data);
-      console.log(
-        "🟢 [API 응답] response.data가 객체인가?",
-        response.data && typeof response.data === "object"
-      );
-      console.log(
-        "🟢 [API 응답] response.data.content:",
-        response.data?.content
-      );
-      console.log(
-        "🟢 [API 응답] response.data.content 타입:",
-        typeof response.data?.content
-      );
-      console.log(
-        "🟢 [API 응답] response.data.content가 배열인가?",
-        Array.isArray(response.data?.content)
-      );
-
-      let backendPosts = [];
-
+      
+      // 페이징 정보 설정
       if (response.data && typeof response.data === "object") {
         const totalPagesFromResponse =
           response.data.totalPages !== undefined ? response.data.totalPages : 1;
-        const totalElements = response.data.totalElements || 0;
-        console.log("페이징 response.data:", response.data);
-        console.log("페이징 totalPages:", totalPagesFromResponse);
-        console.log("페이징 totalElements:", totalElements);
-        console.log("페이징 현재 페이지:", currentPage);
         setTotalPages(totalPagesFromResponse);
       }
 
+      let backendPosts = [];
+
+      // 게시글 데이터 매핑
       if (
         response.data &&
         response.data.content &&
         Array.isArray(response.data.content)
       ) {
-        console.log(
-          "파싱 Page.content 배열로 파싱 시작, 개수:",
-          response.data.content.length
-        );
-        console.log("파싱 첫 번째 게시글 샘플:", response.data.content[0]);
-
-        backendPosts = response.data.content.map((post, index) => {
-          const mapped = {
-            id: post.id,
-            authorName: post.nickname || "익명",
-            authorNickname: post.nickname || "익명",
-            authorAvatar: "#4442dd",
-            content: post.title || "",
-            title: post.title || "",
-            fullContent: post.content || "",
-            likes: post.likeCount || 0,
-            isLiked: post.isLiked || false,
-            rating: null,
-            category: categoryToKorean(post.category),
-            commentCount:
-              post.commentCount !== null && post.commentCount !== undefined
-                ? Number(post.commentCount)
-                : 0,
-            views: post.viewCount || 0,
-            hasImage:
-              !!post.thumbnailUrl || (post.images && post.images.length > 0),
-            thumbnailUrl:
-              post.thumbnailUrl ||
-              (post.images && post.images.length > 0
-                ? post.images[0].imageUrl || post.images[0].url
-                : null),
-            images: post.images || [],
-            createdAt: post.createdAt,
-            updatedAt: post.updatedAt || post.createdAt,
-            userId: post.userId,
-          };
-          if (index === 0) {
-            console.log("파싱 첫 번째 게시글 매핑 결과:", mapped);
-            console.log(
-              "파싱 원본 post.commentCount:",
-              post.commentCount,
-              "타입:",
-              typeof post.commentCount
-            );
-          }
-          return mapped;
-        });
+        backendPosts = response.data.content.map((post) => ({
+          id: post.id,
+          authorName: post.nickname || "익명",
+          authorNickname: post.nickname || "익명",
+          authorAvatar: "#4442dd",
+          content: post.title || "",
+          title: post.title || "",
+          fullContent: post.content || "",
+          likes: post.likeCount || 0,
+          isLiked: post.isLiked || false,
+          rating: null,
+          category: categoryToKorean(post.category),
+          commentCount:
+            post.commentCount !== null && post.commentCount !== undefined
+              ? Number(post.commentCount)
+              : 0,
+          views: post.viewCount || 0,
+          hasImage:
+            !!post.thumbnailUrl || (post.images && post.images.length > 0),
+          thumbnailUrl:
+            post.thumbnailUrl ||
+            (post.images && post.images.length > 0
+              ? post.images[0].imageUrl || post.images[0].url
+              : null),
+          images: post.images || [],
+          createdAt: post.createdAt,
+          updatedAt: post.updatedAt || post.createdAt,
+          userId: post.userId,
+        }));
       } else if (Array.isArray(response.data)) {
-        // 백엔드에서 배열로 직접 반환하는 경우
-        console.log("파싱 직접 배열로 파싱, 개수:", response.data.length);
+        // 백엔드에서 배열로 직접 반환하는 경우에 대한 대비
         backendPosts = response.data.map((post) => ({
           id: post.id,
           authorName: post.nickname || "익명",
@@ -241,32 +200,16 @@ const CommunityList = ({
           updatedAt: post.updatedAt || post.createdAt,
           userId: post.userId,
         }));
-      } else {
-        console.warn("파싱 예상하지 못한 응답 형식:", response.data);
-        console.warn(
-          "파싱 response.data 키들:",
-          response.data ? Object.keys(response.data) : "null"
-        );
       }
 
-      console.log("결과 변환된 게시글 개수:", backendPosts.length);
-      console.log("결과 변환된 게시글 목록:", backendPosts);
-      console.log("결과 posts state에 설정할 데이터:", backendPosts);
-
+      // 댓글 수 업데이트 (상세 페이지에서 돌아왔을 때 반영)
       if (
         updatedPostCommentCount &&
         Object.keys(updatedPostCommentCount).length > 0
       ) {
-        console.log(
-          "댓글 수 업데이트 updatedPostCommentCount:",
-          updatedPostCommentCount
-        );
         backendPosts = backendPosts.map((post) => {
           const updatedCount = updatedPostCommentCount[post.id];
           if (updatedCount !== undefined && updatedCount !== null) {
-            console.log(
-              `댓글 수 업데이트 게시글 ${post.id}: ${post.commentCount} → ${updatedCount}`
-            );
             return { ...post, commentCount: updatedCount };
           }
           return post;
@@ -274,72 +217,41 @@ const CommunityList = ({
       }
 
       setPosts(backendPosts);
-
-      console.log("완료 posts state 업데이트 완료");
     } catch (error) {
-      console.error("게시글 목록 가져오기 실패");
-      console.error("에러 객체:", error);
-      console.error("에러 메시지:", error.message);
-      console.error("에러 응답:", error.response);
-      console.error("에러 응답 데이터:", error.response?.data);
-      console.error("에러 상태 코드:", error.response?.status);
-      console.error("에러 요청 URL:", error.config?.url);
-      console.error("에러 요청 baseURL:", error.config?.baseURL);
-
+      console.error("게시글 목록 가져오기 실패", error);
       setPosts([]);
     } finally {
       setLoading(false);
-      console.log("완료 로딩 상태 해제");
     }
   };
 
-  useEffect(() => {
-    console.log("상태 posts 상태 변경됨, 개수:", posts.length);
-    console.log("상태 posts 내용:", posts);
-  }, [posts]);
-
+  // 검색 조건 변경 시 페이지 초기화
   useEffect(() => {
     setCurrentPage(0);
   }, [selectedCategory, sortType, searchKeyword]);
 
+  // 데이터 로드
   useEffect(() => {
-    console.log(
-      "🔄 [useEffect] fetchPosts 호출, selectedCategory:",
-      selectedCategory,
-      "currentPage:",
-      currentPage,
-      "sortType:",
-      sortType,
-      "searchKeyword:",
-      searchKeyword
-    );
     fetchPosts();
   }, [selectedCategory, currentPage, sortType, searchKeyword]);
 
+  // 리프레시 트리거
   useEffect(() => {
     if (refreshTrigger > 0) {
-      console.log(" refreshTrigger 변경:", refreshTrigger);
-      console.log(" updatedPostCommentCount:", updatedPostCommentCount);
       fetchPosts();
     }
   }, [refreshTrigger]);
 
+  // 댓글 수 즉시 업데이트 로직
   useEffect(() => {
     if (
       updatedPostCommentCount &&
       Object.keys(updatedPostCommentCount).length > 0
     ) {
-      console.log(
-        "댓글 수 즉시 업데이트 updatedPostCommentCount:",
-        updatedPostCommentCount
-      );
       setPosts((prevPosts) => {
         const updatedPosts = prevPosts.map((post) => {
           const updatedCount = updatedPostCommentCount[post.id];
           if (updatedCount !== undefined && updatedCount !== null) {
-            console.log(
-              `댓글 수 즉시 업데이트 게시글 ${post.id}: ${post.commentCount} → ${updatedCount}`
-            );
             return { ...post, commentCount: updatedCount };
           }
           return post;
@@ -377,7 +289,6 @@ const CommunityList = ({
     const baseStyle = "px-4 py-2 rounded-lg transition-colors";
 
     if (isSelected) {
-      // 선택된 카테고리에 따라 색상 적용
       switch (button) {
         case "잡담":
           return `${baseStyle} bg-[#adf382] text-black font-semibold`;
@@ -400,12 +311,13 @@ const CommunityList = ({
     setSearchKeyword(search);
     setCurrentPage(0);
   };
+
   return (
     <div className="max-w-[800px] mx-auto px-6 py-8">
       {/* 검색바와 버튼 */}
       <div className="mb-8">
         <div className="flex gap-3 mb-4">
-          {/* 검색 타입 선택 (왼쪽) */}
+          {/* 검색 타입 선택 */}
           <select
             value={searchType}
             onChange={(e) => setSearchType(e.target.value)}
@@ -451,34 +363,15 @@ const CommunityList = ({
       {/* 카테고리 필터 & 정렬 */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex gap-2">
-          <button
-            id="all-button"
-            className={isCategorySelected("전체")}
-            onClick={() => setSelectedCategory("전체")}
-          >
-            전체
-          </button>
-          <button
-            id="chat-button"
-            className={isCategorySelected("잡담")}
-            onClick={() => setSelectedCategory("잡담")}
-          >
-            잡담
-          </button>
-          <button
-            id="question-button"
-            className={isCategorySelected("질문")}
-            onClick={() => setSelectedCategory("질문")}
-          >
-            질문
-          </button>
-          <button
-            id="tip-button"
-            className={isCategorySelected("꿀팁")}
-            onClick={() => setSelectedCategory("꿀팁")}
-          >
-            꿀팁
-          </button>
+          {["전체", "잡담", "질문", "꿀팁"].map((cat) => (
+            <button
+              key={cat}
+              className={isCategorySelected(cat)}
+              onClick={() => setSelectedCategory(cat)}
+            >
+              {cat}
+            </button>
+          ))}
         </div>
         <select
           value={sortType}
@@ -550,7 +443,7 @@ const CommunityList = ({
 
                 {/* 우측 영역: 썸네일 이미지와 시간 */}
                 <div className="flex-shrink-0 flex flex-col items-end justify-end gap-2">
-                  {/* 썸네일 이미지 - 이미지가 있을 때만 표시 */}
+                  {/* 썸네일 이미지 */}
                   {post.thumbnailUrl && (
                     <div className="w-24 h-24 rounded-lg overflow-hidden">
                       <img
@@ -558,13 +451,12 @@ const CommunityList = ({
                         alt="게시글 썸네일"
                         className="w-full h-full object-cover"
                         onError={(e) => {
-                          console.error("이미지 로드 실패:", post.thumbnailUrl);
                           e.target.style.display = "none";
                         }}
                       />
                     </div>
                   )}
-                  {/* 우측 하단에 작성일시/수정일시 표시 (썸네일 유무와 관계없이 항상 하단에 표시) */}
+                  {/* 작성일시/수정일시 */}
                   <div className="text-[12px] text-[#999]">
                     {getDisplayDateTime(post)}
                   </div>
@@ -594,16 +486,12 @@ const CommunityList = ({
           Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
             let pageNum;
             if (totalPages <= 5) {
-              // 전체 페이지가 5개 이하인 경우 모두 표시
               pageNum = i;
             } else if (currentPage < 3) {
-              // 현재 페이지가 앞쪽인 경우
               pageNum = i;
             } else if (currentPage > totalPages - 4) {
-              // 현재 페이지가 뒤쪽인 경우
               pageNum = totalPages - 5 + i;
             } else {
-              // 현재 페이지가 중간인 경우
               pageNum = currentPage - 2 + i;
             }
 

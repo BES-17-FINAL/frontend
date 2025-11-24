@@ -10,10 +10,9 @@ import Community from "./pages/community";
 import AreaBasedListPage from "./pages/area_based_list_page";
 import FestivalListPage from "./pages/FestivalListPage";
 import SearchResults from "./pages/SearchResults";
-
-
-import { UserProfile } from "./pages/profile"
+import { UserProfile } from "./pages/profile";
 import useAuthStore from "./store/authStore";
+
 const App = () => {
   const { isAuthenticated } = useAuthStore();
 
@@ -24,7 +23,6 @@ const App = () => {
   return (
     <BrowserRouter>
       <Routes>
-
         {/* 메인 */}
         <Route path="/" element={<TravelHubHome />} />
 
@@ -43,9 +41,13 @@ const App = () => {
 
         {/* OAuth 콜백 */}
         <Route path="/oauth/callback" element={<OAuthCallback />} />
-        <Route path="/search" element={<SearchResults />}/>
-        <Route path="/profile" element={isAuthenticated ?<UserProfile /> : <Navigate to="login" />} />
-      
+
+        {/* 프로필 (로그인 시 접근 가능) */}
+        <Route 
+          path="/profile" 
+          element={isAuthenticated ? <UserProfile /> : <Navigate to="/login" />} 
+        />
+       
         {/* 커뮤니티 */}
         <Route path="/community" element={<Community />} />
 
@@ -57,7 +59,6 @@ const App = () => {
 
         {/* 지역 축제 관광 리스트 페이지 */}
         <Route path="/festivals" element={<FestivalListPage />} />
-
 
       </Routes>
     </BrowserRouter>
