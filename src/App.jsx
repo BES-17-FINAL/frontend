@@ -8,7 +8,6 @@ import SpotDetail from "./pages/spotDetail";
 import OAuthCallback from "./pages/OAuthCallback";
 import Community from "./pages/community";
 import AreaBasedListPage from "./pages/area_based_list_page";
-import { UserProfile } from "./pages/profile"
 import FestivalListPage from "./pages/FestivalListPage";
 
 
@@ -24,7 +23,6 @@ const App = () => {
   return (
     <BrowserRouter>
       <Routes>
-
         {/* 메인 */}
         <Route path="/" element={<TravelHubHome />} />
 
