@@ -72,7 +72,13 @@ const FestivalList = ({ festivals, loading, error }) => {
                 className="h-full w-full object-cover rounded-md"
               />
             ) : (
-              <span className="text-gray-500 text-sm">이미지 없음</span>
+              <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
+                      <img
+                      src={"uploads/images/free-icon-picture-14534501.png"}
+                      alt={festival.title}
+                      className="h-full object-cover"
+                      />
+                    </div>
             )}
           </div>
 

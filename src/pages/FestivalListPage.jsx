@@ -10,11 +10,13 @@ function FestivalListPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`http://localhost:8080/api/festivals?numOfRows=50&pageNo=1`);
+      const res = await fetch(`http://localhost:8080/api/festival/ongoing`);
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const json = await res.json();
-      const items = json?.response?.body?.items?.item || [];
+      console.log("API Response:", json);
+      const items = json || [];
       setFestivals(items);
+      console.log("Fetched festivals:", items);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -39,25 +41,29 @@ function FestivalListPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {festivals.map((f) => (
               <div
-                key={f.contentid}
+                key={f.id}
                 className="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-xl transition"
               >
-                {f.firstimage ? (
+                {f.firstImage ? (
                   <img
-                    src={f.firstimage}
+                    src={f.firstImage}
                     alt={f.title}
                     className="w-full h-48 object-cover"
                   />
                 ) : (
                   <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
-                    이미지 없음
+                    <img
+                    src={"uploads/images/free-icon-picture-14534501.png"}
+                    alt={f.title}
+                    className="h-full object-cover"
+                    />
                   </div>
                 )}
                 <div className="p-4">
                   <h2 className="text-lg font-bold mb-2">{f.title}</h2>
                   <p className="text-gray-600">{f.addr1 || "주소 정보 없음"}</p>
                   <p className="text-sm text-gray-500">
-                    {f.eventstartdate} ~ {f.eventenddate}
+                    {f.start_at} ~ {f.end_at}
                   </p>
                 </div>
               </div>

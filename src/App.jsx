@@ -10,6 +10,7 @@ import UserProfile from "./pages/profile";
 import Community from "./pages/community";
 import AreaBasedListPage from "./pages/area_based_list_page";
 import FestivalListPage from "./pages/FestivalListPage";
+import SearchResults from "./pages/SearchResults";
 
 
 import useAuthStore from "./store/authStore";
@@ -48,7 +49,7 @@ const App = () => {
         <Route path="/change-password" element={<ChangePassword />} />
         {/* 커뮤니티 */}
         <Route path="/community" element={<Community />} />
-
+        <Route path="/search" element={<SearchResults />}/>
         {/* 지역 기반 관광지 목록 */}
         <Route path="/explore" element={<AreaBasedListPage />} />
         {/* 축제 목록 */}

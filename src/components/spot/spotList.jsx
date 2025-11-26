@@ -39,7 +39,7 @@ const SpotList = ({ spotList }) => {
           <div className="h-30 bg-gray-200 rounded-md mb-4 flex items-center justify-center">
             {/* 이미지가 없으므로 플레이스홀더 */}
             <img
-              src={spot.firstImage}
+              src={spot.firstImage || "uploads/images/free-icon-picture-14534501.png"}
               alt={spot.title}
               className="h-full rounded-md"
             />

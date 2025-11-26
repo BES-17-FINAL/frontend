@@ -144,8 +144,12 @@ function AreaBasedListPage() {
                       className="w-full h-52 object-cover"
                     />
                   ) : (
-                    <div className="w-full h-52 bg-gray-200 flex items-center justify-center text-gray-400">
-                      이미지 없음
+                    <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
+                      <img
+                      src={"uploads/images/free-icon-picture-14534501.png"}
+                      alt={item.title}
+                      className="h-full object-cover"
+                      />
                     </div>
                   )}
                   <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/70 to-transparent p-3">
