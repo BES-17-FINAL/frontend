@@ -50,13 +50,13 @@ const SpotList = ({ spotList }) => {
                       <Star
                         key={i}
                         className={`w-5 h-5 ${
-                          i < spot.receive
+                          i <= spot.receive - 1
                             ? 'fill-yellow-400 text-yellow-400'
                             : 'fill-gray-300 text-gray-300'
                         }`}
                       />
                     ))}
-          <p className="text-gray-600 text-sm ml-3">{spot.receive}</p>
+          <p className="text-gray-600 text-sm ml-3">{spot.receive.toFixed(1)}</p>
         </div>
           
         </div>
