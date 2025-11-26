@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Star, MapPin, Clock, Phone, Globe } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import useSpotStore from "../store/spotStore";
@@ -27,7 +27,7 @@ const SpotDetail = () => {
   const [userRating, setUserRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState("");
-
+  const mapRef = useRef(null);
   // 날짜 포맷
   const formatDate = (isoString) => {
     const date = new Date(isoString);
@@ -46,6 +46,27 @@ const SpotDetail = () => {
         if (!spotId) return;
 
         const spotData = await getSpot(spotId);
+        {
+          /* 더미 데이터
+      
+        if (!spotData) {
+          const dummySpot = {
+            id: 999,
+            title: "테스트 관광지 (더미)",
+            address: "서울특별시 중구 세종대로 110",
+            tel: "02-123-4567",
+            homepage: "https://example.com",
+            firstImage: "https://via.placeholder.com/800x400",
+            // 한국 관광공사 API 좌표 기준: mapx = 경도(lng), mapy = 위도(lat)
+            mapx: 126.9783882, // 서울 시청 근처 경도
+            mapy: 37.5666103, // 서울 시청 근처 위도
+          };
+          setSpot(dummySpot);
+          return;
+        }
+        */
+        }
+
         setSpot(spotData);
 
         const ratingData = await getAverageRating(spotId);
@@ -74,6 +95,53 @@ const SpotDetail = () => {
     fetchData();
   }, [spotId, getSpot, getAverageRating, getReviews]);
 
+  useEffect(() => {
+    if (!spot) {
+      return;
+    }
+    if (!mapRef.current) {
+      return;
+    }
+
+    const loadKakaoMap = () => {
+      if (!window.kakao || !window.kakao.maps) {
+        return;
+      }
+
+      const lat = Number(spot.mapy ?? 37.5666103);
+      const lng = Number(spot.mapx ?? 126.9783882);
+
+      const center = new window.kakao.maps.LatLng(lat, lng);
+
+      const options = {
+        center,
+        level: 3,
+      };
+
+      const map = new window.kakao.maps.Map(mapRef.current, options);
+
+      new window.kakao.maps.Marker({
+        position: center,
+        map,
+      });
+    };
+
+    if (window.kakao && window.kakao.maps) {
+      window.kakao.maps.load(loadKakaoMap);
+    } else {
+      const script = document.createElement("script");
+      script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_MAP_KEY}&autoload=false`;
+      script.async = true;
+      script.onload = () => {
+        window.kakao.maps.load(loadKakaoMap);
+      };
+      script.onerror = () => {
+        console.error("kakao 스크립트 로드 실패");
+      };
+      document.head.appendChild(script);
+    }
+  }, [spot]);
+
   const handleBack = () => navigate(-1);
 
   const handleCommentChange = (e) => setComment(e.target.value);
@@ -89,31 +157,33 @@ const SpotDetail = () => {
     setUserRating(0);
     setComment("");
   };
-  
+
   const handleIsAuth = (isReview) => {
-    if(!isAuthenticated){
-      const result = confirm("로그인이 필요한 기능입니다. 로그인 하시겠습니까?");
-      if (result){
+    if (!isAuthenticated) {
+      const result = confirm(
+        "로그인이 필요한 기능입니다. 로그인 하시겠습니까?"
+      );
+      if (result) {
         navigate("/login");
       }
     } else {
-      setIsReview(!isReview)
+      setIsReview(!isReview);
     }
-  }
+  };
 
   if (!spot) return <p className="text-center mt-10">Loading...</p>;
 
   return (
     <div className="bg-white min-h-screen">
       <Header />
-      
+
       <div className="max-w-[1200px] mx-auto px-8 py-12">
         <button
-        onClick={handleBack}
-        className="mb-6 px-6 py-2 border-2 border-[#dedede] text-black hover:border-[#4442dd] rounded-lg transition-colors"
-      >
-        ← 뒤로가기
-      </button>
+          onClick={handleBack}
+          className="mb-6 px-6 py-2 border-2 border-[#dedede] text-black hover:border-[#4442dd] rounded-lg transition-colors"
+        >
+          ← 뒤로가기
+        </button>
         {/* Spot Title & Rating */}
         <div className="mb-12">
           <h2 className="text-[36px] text-black mb-3">{spot.title}</h2>
@@ -122,23 +192,35 @@ const SpotDetail = () => {
               <Star
                 key={i}
                 className={`w-6 h-6 ${
-                  i < rating ? "fill-yellow-400 text-yellow-400" : "fill-gray-300 text-gray-300"
+                  i < rating
+                    ? "fill-yellow-400 text-yellow-400"
+                    : "fill-gray-300 text-gray-300"
                 }`}
               />
             ))}
             <span className="text-black text-[20px] ml-1">{rating}</span>
-            <span className="text-[#666] ml-2">({reviews.length}개의 리뷰)</span>
+            <span className="text-[#666] ml-2">
+              ({reviews.length}개의 리뷰)
+            </span>
           </div>
         </div>
 
         {/* Spot Image & Info */}
         <div className="grid grid-cols-3 gap-6 mb-8">
           <div className="col-span-2 h-[400px] rounded-lg overflow-hidden shadow-md">
-            <img src={spot.firstImage} alt={spot.title} className="w-full h-full object-cover" />
+            <img
+              src={spot.firstImage}
+              alt={spot.title}
+              className="w-full h-full object-cover"
+            />
           </div>
 
           <div className="border-2 border-[#dedede] rounded-lg p-6 flex flex-col justify-between">
             <h3 className="text-[18px] text-black mb-4">관광지 정보</h3>
+            <div
+              ref={mapRef}
+              className="w-full h-40 mb-4 rounded-lg border border-[#dedede]"
+            />
             <div className="space-y-4">
               <div className="flex items-start gap-3">
                 <MapPin className="w-5 h-5 text-[#4442dd] mt-1 flex-shrink-0" />
@@ -208,7 +290,9 @@ const SpotDetail = () => {
 
           {isReview && (
             <div className="mb-6 bg-[#f5f5f5] rounded-lg p-4">
-              <label className="block text-[16px] text-black mb-3">별점 *</label>
+              <label className="block text-[16px] text-black mb-3">
+                별점 *
+              </label>
               <div className="flex items-center gap-2 mb-3">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button
@@ -227,7 +311,9 @@ const SpotDetail = () => {
                     />
                   </button>
                 ))}
-                <span className="text-[20px] text-black ml-2">{userRating > 0 ? `${userRating}.0` : ""}</span>
+                <span className="text-[20px] text-black ml-2">
+                  {userRating > 0 ? `${userRating}.0` : ""}
+                </span>
               </div>
               <textarea
                 value={comment}
@@ -260,8 +346,12 @@ const SpotDetail = () => {
                       {review.nickname?.[0] || "?"}
                     </div>
                     <div>
-                      <p className="text-[16px] text-black font-medium">{review.nickname}</p>
-                      <p className="text-[13px] text-gray-500">{formatDate(review.createdAt)}</p>
+                      <p className="text-[16px] text-black font-medium">
+                        {review.nickname}
+                      </p>
+                      <p className="text-[13px] text-gray-500">
+                        {formatDate(review.createdAt)}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
@@ -269,13 +359,17 @@ const SpotDetail = () => {
                       <Star
                         key={i}
                         className={`w-5 h-5 ${
-                          i < review.rating ? "fill-yellow-400 text-yellow-400" : "fill-gray-300 text-gray-300"
+                          i < review.rating
+                            ? "fill-yellow-400 text-yellow-400"
+                            : "fill-gray-300 text-gray-300"
                         }`}
                       />
                     ))}
                   </div>
                 </div>
-                <p className="text-[16px] text-[#333] leading-relaxed">{review.comment}</p>
+                <p className="text-[16px] text-[#333] leading-relaxed">
+                  {review.comment}
+                </p>
               </div>
             ))}
           </div>
@@ -286,7 +380,9 @@ const SpotDetail = () => {
           <h2 className="text-[24px] font-bold mb-4">주변 숙박업소</h2>
           <div className="grid grid-cols-3 gap-4">
             {lodgings.length === 0 ? (
-              <p className="text-gray-500 col-span-3">주변 숙박업소가 없습니다.</p>
+              <p className="text-gray-500 col-span-3">
+                주변 숙박업소가 없습니다.
+              </p>
             ) : (
               lodgings.map((lodge) => (
                 <div key={lodge.id} className="border rounded-lg p-4">
